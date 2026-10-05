@@ -34,3 +34,6 @@ null
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+.env*
