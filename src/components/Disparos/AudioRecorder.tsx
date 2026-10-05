@@ -99,7 +99,7 @@ export default function AudioRecorder({ onAudioUrl, disabled }: AudioRecorderPro
   return (
     <div className="space-y-3">
       {!audioBlob ? (
-        <div className="flex flex-col items-center gap-3 py-6 border-2 border-dashed border-gray-200 rounded-xl">
+        <div className="flex flex-col items-center gap-3 py-6 border-2 border-dashed border-gray-200 dark:border-white/15 rounded-xl">
           <button
             onClick={isRecording ? stopRecording : startRecording}
             disabled={disabled}
@@ -112,7 +112,7 @@ export default function AudioRecorder({ onAudioUrl, disabled }: AudioRecorderPro
               <Mic className="h-6 w-6 text-white" />
             )}
           </button>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-muted-foreground">
             {isRecording ? (
               <span className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
@@ -124,10 +124,10 @@ export default function AudioRecorder({ onAudioUrl, disabled }: AudioRecorderPro
           </span>
         </div>
       ) : (
-        <div className="space-y-3 p-4 bg-gray-50 rounded-xl">
+        <div className="space-y-3 p-4 bg-gray-50 dark:bg-white/5 rounded-xl">
           <div className="flex items-center gap-3">
             <audio ref={audioRef} src={audioUrl!} controls className="flex-1 h-10" />
-            <span className="text-xs text-gray-500 whitespace-nowrap">{formatTime(duration)}</span>
+            <span className="text-xs text-gray-500 dark:text-muted-foreground whitespace-nowrap">{formatTime(duration)}</span>
           </div>
           <div className="flex gap-2">
             <Button

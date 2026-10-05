@@ -157,12 +157,12 @@ const EmailComposer = () => {
             Crie e envie mensagens personalizadas para seus contatos.
           </p>
         </div>
-        <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
+        <div className="flex bg-gray-100 dark:bg-white/10 dark:bg-white/5 p-1 rounded-xl">
           <Button 
             variant={sendType === 'single' ? 'secondary' : 'ghost'} 
             size="sm"
             onClick={() => setSendType('single')}
-            className={`rounded-lg text-xs ${sendType === 'single' ? 'bg-white shadow-sm' : ''}`}
+            className={`rounded-lg text-xs ${sendType === 'single' ? 'bg-white dark:bg-card shadow-sm' : ''}`}
           >
             Individual
           </Button>
@@ -170,7 +170,7 @@ const EmailComposer = () => {
             variant={sendType === 'bulk' ? 'secondary' : 'ghost'} 
             size="sm"
             onClick={() => setSendType('bulk')}
-            className={`rounded-lg text-xs ${sendType === 'bulk' ? 'bg-white shadow-sm' : ''}`}
+            className={`rounded-lg text-xs ${sendType === 'bulk' ? 'bg-white dark:bg-card shadow-sm' : ''}`}
           >
             Em Massa
           </Button>
@@ -186,14 +186,14 @@ const EmailComposer = () => {
               placeholder="Seu Nome ou Empresa"
               value={fromName}
               onChange={(e) => setFromName(e.target.value)}
-              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11"
+              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11"
             />
           </div>
 
           <div className="space-y-2">
             <Label className="text-[13px] font-semibold text-foreground">Email de Origem</Label>
             <Select value={fromEmail} onValueChange={setFromEmail}>
-              <SelectTrigger className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11 text-sm">
+              <SelectTrigger className="rounded-2xl bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11 text-sm">
                 <SelectValue placeholder="Selecione o email" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-border/40">
@@ -218,7 +218,7 @@ const EmailComposer = () => {
                   value={currentRecipient}
                   onChange={(e) => setCurrentRecipient(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addRecipient()}
-                  className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11"
+                  className="rounded-2xl bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11"
                 />
                 <Button 
                   onClick={addRecipient} 
@@ -235,24 +235,24 @@ const EmailComposer = () => {
                     type="file"
                     accept=".txt,.csv"
                     onChange={handleBulkUpload}
-                    className="cursor-pointer rounded-2xl bg-[#374DA4]/5 border-dashed border-[#374DA4]/20 hover:bg-[#374DA4]/10 transition-colors h-24 pt-8"
+                    className="cursor-pointer rounded-2xl bg-primary/5 border-dashed border-primary/20 hover:bg-primary/10 transition-colors h-24 pt-8"
                   />
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <Upload className="h-5 w-5 text-[#374DA4] mb-1" />
-                    <span className="text-xs font-medium text-[#374DA4]">Upload de lista (.txt / .csv)</span>
+                    <Upload className="h-5 w-5 text-primary mb-1" />
+                    <span className="text-xs font-medium text-primary">Upload de lista (.txt / .csv)</span>
                   </div>
                 </div>
               )}
 
               {recipients.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-white/5 rounded-2xl border border-border/40 min-h-[60px]">
+                <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-white/5 dark:bg-white/5 rounded-2xl border border-border/40 min-h-[60px]">
                   {recipients.map((email) => (
-                    <Badge key={email} variant="secondary" className="pl-3 pr-1 py-1 rounded-xl bg-white dark:bg-white/10 border-border/40 gap-1 text-[11px] font-medium">
+                    <Badge key={email} variant="secondary" className="pl-3 pr-1 py-1 rounded-xl bg-white dark:bg-card dark:bg-white/10 border-border/40 gap-1 text-[11px] font-medium">
                       {email}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-5 w-5 rounded-full hover:bg-red-50 hover:text-red-500"
+                        className="h-5 w-5 rounded-full hover:bg-red-50 hover:text-red-500 dark:hover:text-red-400"
                         onClick={() => removeRecipient(email)}
                       >
                         <X className="h-3 w-3" />
@@ -269,7 +269,7 @@ const EmailComposer = () => {
           <div className="space-y-2">
             <Label htmlFor="template" className="text-[13px] font-semibold text-foreground">Template</Label>
             <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-              <SelectTrigger className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11 text-sm">
+              <SelectTrigger className="rounded-2xl bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11 text-sm">
                 <SelectValue placeholder="Selecione um template (opcional)" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-border/40">
@@ -287,7 +287,7 @@ const EmailComposer = () => {
               placeholder="O assunto do seu email"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11"
+              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 border-border/40 focus:bg-white transition-all h-11"
             />
           </div>
 
@@ -298,7 +298,7 @@ const EmailComposer = () => {
               placeholder="<h1>Seu email aqui...</h1>"
               value={htmlContent}
               onChange={(e) => setHtmlContent(e.target.value)}
-              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-border/40 focus:bg-white transition-all min-h-[160px] font-mono text-sm"
+              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 border-border/40 focus:bg-white transition-all min-h-[160px] font-mono text-sm"
             />
           </div>
 
@@ -309,7 +309,7 @@ const EmailComposer = () => {
               placeholder="Versão simples em texto"
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
-              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-border/40 focus:bg-white transition-all min-h-[80px]"
+              className="rounded-2xl bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 border-border/40 focus:bg-white transition-all min-h-[80px]"
             />
           </div>
         </div>

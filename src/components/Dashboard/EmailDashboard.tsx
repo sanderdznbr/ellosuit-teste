@@ -33,13 +33,13 @@ const EmailDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] dark:bg-[#000] page-content overflow-y-auto">
+    <div className="min-h-screen bg-[#faf9f7] dark:bg-background dark:bg-[#000] page-content overflow-y-auto">
       {/* Header */}
-      <div className="border-b border-border/40 bg-[#faf9f7]/80 dark:bg-black/80 backdrop-blur-xl sticky top-0 z-50 px-6 py-4">
+      <div className="border-b border-border/40 bg-[#faf9f7] dark:bg-background/80 dark:bg-black/80 backdrop-blur-xl sticky top-0 z-50 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-white/5 border border-border/40 shadow-sm"
+              className="w-10 h-10 rounded-xl flex items-center justify-center bg-white dark:bg-card dark:bg-white/5 border border-border/40 shadow-sm"
             >
               <Mail className="h-5 w-5" style={{ color: OMNI_COLOR }} />
             </div>
@@ -59,7 +59,7 @@ const EmailDashboard = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     activeTab === tab.id 
-                      ? "bg-white dark:bg-white/10 text-foreground shadow-sm" 
+                      ? "bg-white dark:bg-card dark:bg-white/10 text-foreground shadow-sm" 
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -86,30 +86,30 @@ const EmailDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
           <div className="space-y-8">
             {activeTab === 'compose' && (
-              <div className="bg-white dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
+              <div className="bg-white dark:bg-card dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
                 <EmailComposer />
               </div>
             )}
             {activeTab === 'campaigns' && (
-              <div className="bg-white dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
+              <div className="bg-white dark:bg-card dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
                 <CampaignMail />
               </div>
             )}
             {activeTab === 'tracking' && (
-              <div className="bg-white dark:bg-white/5 border border-border/40 rounded-3xl overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-card dark:bg-white/5 border border-border/40 rounded-3xl overflow-hidden shadow-sm">
                 <MailTracking />
               </div>
             )}
             {activeTab === 'settings' && (
               <div className="space-y-6">
-                <div className="bg-white dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
+                <div className="bg-white dark:bg-card dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
                   <h3 className="text-lg font-semibold text-foreground mb-4 tracking-tight">Limite de Envios</h3>
                   <EmailLimitIndicator showDetails={true} className="w-full" />
                   <p className="text-xs text-muted-foreground mt-4 leading-relaxed">
                     Seu limite diário de envios é renovado a cada 24 horas. Para aumentar seus limites, entre em contato com o suporte.
                   </p>
                 </div>
-                <div className="bg-white dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
+                <div className="bg-white dark:bg-card dark:bg-white/5 border border-border/40 rounded-3xl p-8 shadow-sm">
                   <h3 className="text-lg font-semibold text-foreground mb-4 tracking-tight">Conexão de Email</h3>
                   <EmailConnectionWizard />
                 </div>
@@ -119,7 +119,7 @@ const EmailDashboard = () => {
 
           {/* Sidebar Actions */}
           <div className="space-y-6">
-            <div className="bg-white dark:bg-white/5 border border-border/40 rounded-3xl p-6 shadow-sm">
+            <div className="bg-white dark:bg-card dark:bg-white/5 border border-border/40 rounded-3xl p-6 shadow-sm">
               <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Ações Rápidas</h4>
               <div className="grid grid-cols-1 gap-2">
                 {quickActions.map((action) => (
@@ -128,8 +128,8 @@ const EmailDashboard = () => {
                     onClick={action.onClick}
                     className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <action.icon className="h-4 w-4 text-muted-foreground group-hover:text-[#374DA4]" />
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/10 dark:bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <action.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                     </div>
                     <span className="text-sm font-medium text-foreground">{action.label}</span>
                   </button>
@@ -137,7 +137,7 @@ const EmailDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-[#374DA4] rounded-3xl p-6 text-white overflow-hidden relative shadow-lg">
+            <div className="bg-primary rounded-3xl p-6 text-white overflow-hidden relative shadow-lg">
               <div className="relative z-10">
                 <h4 className="font-semibold mb-2">Novo no Email?</h4>
                 <p className="text-xs text-white/80 leading-relaxed mb-4">
@@ -146,7 +146,7 @@ const EmailDashboard = () => {
                 <Button 
                   variant="secondary" 
                   size="sm" 
-                  className="w-full rounded-xl bg-white text-[#374DA4] hover:bg-white/90"
+                  className="w-full rounded-xl bg-white dark:bg-card text-primary hover:bg-white/90"
                   onClick={() => navigate('/dashboard/email-templates')}
                 >
                   Ver Guia

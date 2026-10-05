@@ -105,9 +105,9 @@ const EmailConnectionWizard = () => {
                 <h4 className="font-semibold text-foreground mb-1">Envio Direto</h4>
                 <p className="text-sm text-muted-foreground">Envie emails sem sair da plataforma</p>
               </div>
-              <div className="bg-green-50 dark:bg-green-950/30 rounded-2xl p-5 text-center">
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <Shield className="h-6 w-6 text-green-600" />
+              <div className="bg-green-50 dark:bg-green-500/15 dark:bg-green-950/30 rounded-2xl p-5 text-center">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-500/20 dark:bg-green-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <h4 className="font-semibold text-foreground mb-1">100% Seguro</h4>
                 <p className="text-sm text-muted-foreground">Conexão OAuth2 criptografada</p>
@@ -180,20 +180,20 @@ const EmailConnectionWizard = () => {
               </div>
 
               <div className="flex items-center gap-4 p-5 bg-card rounded-2xl border border-border">
-                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-xl flex items-center justify-center">
-                  <ArrowRight className="h-5 w-5 text-green-600" />
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-500/20 dark:bg-green-900/50 rounded-xl flex items-center justify-center">
+                  <ArrowRight className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-medium text-foreground">Enviar emails</h4>
                   <p className="text-sm text-muted-foreground">Para enviar em seu nome</p>
                 </div>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Envio</span>
+                <span className="text-xs bg-green-100 dark:bg-green-500/20 text-green-700 px-2 py-1 rounded-full">Envio</span>
               </div>
             </div>
 
-            <div className="bg-green-50 dark:bg-green-950/30 rounded-2xl p-5">
+            <div className="bg-green-50 dark:bg-green-500/15 dark:bg-green-950/30 rounded-2xl p-5">
               <div className="flex gap-3">
-                <Shield className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <Shield className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-semibold text-green-800 dark:text-green-200 mb-1">Sua Privacidade</h4>
                   <p className="text-sm text-green-700 dark:text-green-300">
@@ -215,13 +215,13 @@ const EmailConnectionWizard = () => {
 
             {isConnected ? (
               <div className="text-center space-y-6">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="h-10 w-10 text-green-600" />
+                <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">Email Conectado!</h3>
                   <p className="text-muted-foreground mb-4">{emailAccount?.provider_email}</p>
-                  <Button variant="outline" onClick={disconnectGmail} className="text-red-600 border-red-200 hover:bg-red-50 rounded-xl">
+                  <Button variant="outline" onClick={disconnectGmail} className="text-red-600 dark:text-red-400 border-red-200 hover:bg-red-50 rounded-xl">
                     Desconectar
                   </Button>
                 </div>
@@ -284,12 +284,12 @@ const EmailConnectionWizard = () => {
 
             {isConnected ? (
               <div className="space-y-6">
-                <div className="bg-green-50 dark:bg-green-950/30 rounded-2xl p-8 text-center">
-                  <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
+                <div className="bg-green-50 dark:bg-green-500/15 dark:bg-green-950/30 rounded-2xl p-8 text-center">
+                  <CheckCircle2 className="h-16 w-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
                   <h3 className="text-xl font-bold text-green-800 dark:text-green-200 mb-2">Conexão Verificada!</h3>
                   <p className="text-green-700 dark:text-green-300 mb-4">Seu email está pronto.</p>
-                  <div className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-xl border border-green-200">
-                    <Mail className="h-4 w-4 text-green-600" />
+                  <div className="inline-flex items-center gap-2 bg-white dark:bg-card dark:bg-gray-800 px-4 py-2 rounded-xl border border-green-200">
+                    <Mail className="h-4 w-4 text-green-600 dark:text-green-400" />
                     <span className="font-medium text-foreground">{emailAccount?.provider_email}</span>
                   </div>
                 </div>
@@ -334,7 +334,7 @@ const EmailConnectionWizard = () => {
               <div 
                 className={cn(
                   "w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs transition-all shadow-sm border border-border/40",
-                  index < currentStep ? "bg-green-500 text-white border-green-500" : index === currentStep ? "text-white shadow-lg" : "bg-white dark:bg-white/5 text-muted-foreground"
+                  index < currentStep ? "bg-green-500 text-white border-green-500" : index === currentStep ? "text-white shadow-lg" : "bg-white dark:bg-card dark:bg-white/5 text-muted-foreground"
                 )}
                 style={index === currentStep ? { backgroundColor: OMNI_COLOR, borderColor: OMNI_COLOR } : {}}
               >
@@ -353,7 +353,7 @@ const EmailConnectionWizard = () => {
       </div>
 
       {/* Content Card */}
-      <div className="bg-gray-50/50 dark:bg-white/5 rounded-3xl border border-border/40 p-8 min-h-[200px] flex flex-col justify-center">
+      <div className="bg-gray-50/50 dark:bg-white/5 dark:bg-white/5 rounded-3xl border border-border/40 p-8 min-h-[200px] flex flex-col justify-center">
         {renderStepContent()}
       </div>
 

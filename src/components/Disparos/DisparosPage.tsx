@@ -1492,11 +1492,11 @@ export default function DisparosPage() {
 
   return (
     <>
-      <div className="min-h-full bg-[#faf9f7] p-4 sm:p-6 pb-[13rem] md:pb-32 lg:pb-6 overscroll-contain">
+      <div className="min-h-full bg-[#faf9f7] dark:bg-background p-4 sm:p-6 pb-[13rem] md:pb-32 lg:pb-6 overscroll-contain">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-[#374DA4]">Disparos</h1>
-            <Button onClick={startNewCampaign} className="bg-[#374DA4] text-white rounded-full shrink-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-primary">Disparos</h1>
+            <Button onClick={startNewCampaign} className="bg-primary text-white rounded-full shrink-0">
               <Plus className="h-4 w-4 mr-2" /> Novo Disparo
             </Button>
           </div>
@@ -1504,17 +1504,17 @@ export default function DisparosPage() {
           {view === 'details' && selectedCampaign ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
-                <Button variant="ghost" onClick={() => setView('list')} className="rounded-full hover:bg-white/50">
+                <Button variant="ghost" onClick={() => setView('list')} className="rounded-full hover:bg-white/50 dark:hover:bg-white/5">
                   <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
                 </Button>
                 
                 <div className="flex items-center gap-3">
                   <Badge variant="secondary" className={`text-[10px] font-bold px-3 py-1 rounded-full ${
-                    selectedCampaign.status === 'completed' ? 'bg-green-50 text-green-600' : 
-                    selectedCampaign.status === 'completed_with_errors' ? 'bg-orange-50 text-orange-600' :
-                    selectedCampaign.status === 'failed' ? 'bg-red-50 text-red-600' :
-                    (selectedCampaign.status === 'running' || selectedCampaign.status === 'processing') ? 'bg-blue-50 text-blue-600 animate-pulse' :
-                    'bg-gray-50 text-gray-500'
+                    selectedCampaign.status === 'completed' ? 'bg-green-50 dark:bg-green-500/15 text-green-600 dark:text-green-400' : 
+                    selectedCampaign.status === 'completed_with_errors' ? 'bg-orange-50 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400' :
+                    selectedCampaign.status === 'failed' ? 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400' :
+                    (selectedCampaign.status === 'running' || selectedCampaign.status === 'processing') ? 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 animate-pulse' :
+                    'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-muted-foreground'
                   }`}>
                     {selectedCampaign.status === 'completed' ? 'Concluído' : 
                      selectedCampaign.status === 'completed_with_errors' ? 'Concluído com Falhas' :
@@ -1524,12 +1524,12 @@ export default function DisparosPage() {
                   </Badge>
                   
                   {selectedCampaign.status === 'running' && (
-                    <Button size="sm" variant="outline" className="rounded-full h-8 px-4 border-gray-200" onClick={() => handleCampaignAction(selectedCampaign.id, 'pause')}>
+                    <Button size="sm" variant="outline" className="rounded-full h-8 px-4 border-gray-200 dark:border-white/15" onClick={() => handleCampaignAction(selectedCampaign.id, 'pause')}>
                       <Pause className="h-3.5 w-3.5 mr-2" /> Pausar
                     </Button>
                   )}
                   {selectedCampaign.status === 'paused' && (
-                    <Button size="sm" variant="outline" className="rounded-full h-8 px-4 border-gray-200" onClick={() => handleCampaignAction(selectedCampaign.id, 'resume')}>
+                    <Button size="sm" variant="outline" className="rounded-full h-8 px-4 border-gray-200 dark:border-white/15" onClick={() => handleCampaignAction(selectedCampaign.id, 'resume')}>
                       <Play className="h-3.5 w-3.5 mr-2" /> Retomar
                     </Button>
                   )}
@@ -1538,7 +1538,7 @@ export default function DisparosPage() {
                       size="sm"
                       variant="outline"
                       disabled={retryingCampaignId === selectedCampaign.id}
-                      className="rounded-full h-8 px-4 border-orange-200 text-orange-600 hover:bg-orange-50"
+                      className="rounded-full h-8 px-4 border-orange-200 text-orange-600 dark:text-orange-400 hover:bg-orange-50"
                       onClick={() => retryFailedJobs(selectedCampaign.id)}
                     >
                       {retryingCampaignId === selectedCampaign.id
@@ -1573,30 +1573,30 @@ export default function DisparosPage() {
                     icon: History
                   }
                 ].map((stat, i) => (
-                  <div key={i} className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white shadow-sm">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                  <div key={i} className="bg-white/50 dark:bg-white/5 backdrop-blur-sm p-5 rounded-2xl border border-white dark:border-white/10 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-foreground/50 uppercase tracking-widest mb-1">{stat.label}</p>
                     <div className="flex items-baseline gap-2">
-                      <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="text-xl font-bold text-gray-900 dark:text-foreground">{stat.value}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
               {selectedFailedCount > 0 && (
-                <div className="md:hidden mb-8 rounded-2xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
+                <div className="md:hidden mb-8 rounded-2xl border border-orange-200 bg-orange-50 dark:bg-orange-500/15 p-4 shadow-sm">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-orange-600">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-card text-orange-600 dark:text-orange-400">
                       <RefreshCw className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-orange-700">{selectedFailedCount} envio(s) com erro</p>
+                      <p className="text-sm font-bold text-orange-700 dark:text-orange-400">{selectedFailedCount} envio(s) com erro</p>
                       <p className="mt-1 text-xs font-medium text-orange-700/80">
                         Depois de reconectar o WhatsApp, retome somente os contatos que falharam.
                       </p>
                       <Button
                         variant="outline"
                         disabled={retryingCampaignId === selectedCampaign.id}
-                        className="mt-3 h-10 w-full rounded-full border-orange-300 bg-white text-orange-700 hover:bg-orange-100"
+                        className="mt-3 h-10 w-full rounded-full border-orange-300 dark:border-orange-500/30 bg-white dark:bg-card text-orange-700 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-500/15"
                         onClick={() => retryFailedJobs(selectedCampaign.id)}
                       >
                         {retryingCampaignId === selectedCampaign.id
@@ -1611,16 +1611,16 @@ export default function DisparosPage() {
 
               <div className="space-y-12">
                 <section>
-                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-1">
+                  <h3 className="text-[10px] font-black text-gray-400 dark:text-foreground/50 uppercase tracking-widest mb-4 px-1">
                     {selectedCampaign.media_type === 'voice' ? 'Roteiro da voz' : 'Mensagem'}
                   </h3>
-                  <div className="bg-white rounded-3xl p-5 sm:p-8 border border-white shadow-sm space-y-4">
+                  <div className="bg-white dark:bg-card rounded-3xl p-5 sm:p-8 border border-white dark:border-white/10 shadow-sm space-y-4">
                     {selectedCampaign.media_type === 'voice' && (
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#374DA4] bg-[#374DA4]/10 px-3 py-1 rounded-full">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">
                           <Mic className="h-3 w-3" /> Voz IA
                         </span>
-                        <span className="text-[10px] font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
+                        <span className="text-[10px] font-medium text-gray-500 dark:text-muted-foreground bg-gray-50 dark:bg-white/5 px-3 py-1 rounded-full">
                           {VOICE_LABELS[selectedCampaign.voice_ia_voice_id] || selectedCampaign.voice_ia_voice_id || 'Voz padrão'}
                         </span>
                         {selectedCampaign.voice_ia_mention_names && (
@@ -1630,7 +1630,7 @@ export default function DisparosPage() {
                         )}
                       </div>
                     )}
-                    <p className="text-gray-600 leading-relaxed whitespace-pre-wrap font-medium">
+                    <p className="text-gray-600 dark:text-foreground/70 leading-relaxed whitespace-pre-wrap font-medium">
                       {selectedCampaign.media_type === 'voice'
                         ? (selectedCampaign.voice_ia_script || 'Sem roteiro.')
                         : (selectedCampaign.message_template || selectedCampaign.message || 'Sem conteúdo.')}
@@ -1639,8 +1639,8 @@ export default function DisparosPage() {
                 </section>
 
                 <section>
-                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-1">Linha do tempo</h3>
-                  <div className="space-y-0 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100">
+                  <h3 className="text-[10px] font-black text-gray-400 dark:text-foreground/50 uppercase tracking-widest mb-4 px-1">Linha do tempo</h3>
+                  <div className="space-y-0 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-white/10">
                     {campaignLogs.length > 0 ? (() => {
                       const delay = Number(selectedCampaign.delay_seconds) || 0;
                       const sentTimes = campaignLogs
@@ -1666,7 +1666,7 @@ export default function DisparosPage() {
 
                         return (
                         <div key={log.id} className="relative pl-12 pb-6 group">
-                          <div className={`absolute left-0 top-1 w-[35px] h-[35px] rounded-full border-4 border-[#faf9f7] flex items-center justify-center z-10 ${
+                          <div className={`absolute left-0 top-1 w-[35px] h-[35px] rounded-full border-4 border-[#faf9f7] dark:border-background flex items-center justify-center z-10 ${
                             log.status === 'success' ? 'bg-green-500' : isPending ? 'bg-amber-400' : 'bg-red-500'
                           }`}>
                             {log.status === 'success'
@@ -1675,10 +1675,10 @@ export default function DisparosPage() {
                                 ? <Clock className="h-3.5 w-3.5 text-white animate-pulse" />
                                 : <XCircle className="h-3.5 w-3.5 text-white" />}
                           </div>
-                          <div className="flex items-center justify-between gap-3 group-hover:bg-white/40 p-2 -m-2 rounded-xl transition-colors">
+                          <div className="flex items-center justify-between gap-3 group-hover:bg-white/40 dark:group-hover:bg-white/5 p-2 -m-2 rounded-xl transition-colors">
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-gray-900">{log.phone}</span>
-                              <span className={`text-[10px] italic mt-0.5 ${isPending ? 'text-amber-500' : 'text-gray-400'}`}>{log.details}</span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-foreground">{log.phone}</span>
+                              <span className={`text-[10px] italic mt-0.5 ${isPending ? 'text-amber-500' : 'text-gray-400 dark:text-foreground/50'}`}>{log.details}</span>
                             </div>
                             {isPending && remaining !== null ? (
                               <div className="flex items-center gap-2 shrink-0">
@@ -1697,7 +1697,7 @@ export default function DisparosPage() {
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md shrink-0">
+                              <span className="text-[10px] font-medium text-gray-400 dark:text-foreground/50 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md shrink-0">
                                 {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                               </span>
                             )}
@@ -1706,8 +1706,8 @@ export default function DisparosPage() {
                         );
                       });
                     })() : (
-                      <div className="bg-white/30 rounded-3xl p-12 text-center border border-dashed border-gray-200">
-                        <p className="text-sm text-gray-400 italic">Aguardando início dos envios...</p>
+                      <div className="bg-white/30 dark:bg-white/5 rounded-3xl p-12 text-center border border-dashed border-gray-200 dark:border-white/15">
+                        <p className="text-sm text-gray-400 dark:text-foreground/50 italic">Aguardando início dos envios...</p>
                       </div>
                     )}
                   </div>
@@ -1731,14 +1731,14 @@ export default function DisparosPage() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{c.title}</p>
-                        <p className="text-[10px] text-gray-400">{new Date(c.created_at).toLocaleString()}</p>
+                        <p className="font-medium text-gray-900 dark:text-foreground truncate">{c.title}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-foreground/50">{new Date(c.created_at).toLocaleString()}</p>
                       </div>
                       <Badge variant="secondary" className={`text-[10px] shrink-0 ${
-                        c.status === 'running' || c.status === 'processing' ? 'bg-blue-50 text-blue-600' :
+                        c.status === 'running' || c.status === 'processing' ? 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300' :
                         c.status === 'paused' ? 'bg-yellow-50 text-yellow-600' :
-                        c.status === 'completed' ? 'bg-green-50 text-green-600' :
-                        failed > 0 ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-500'
+                        c.status === 'completed' ? 'bg-green-50 dark:bg-green-500/15 text-green-600 dark:text-green-400' :
+                        failed > 0 ? 'bg-orange-50 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-muted-foreground'
                       }`}>
                         {c.status === 'running' || c.status === 'processing' ? 'Executando' :
                          c.status === 'paused' ? 'Pausado' :
@@ -1746,11 +1746,11 @@ export default function DisparosPage() {
                          c.status === 'draft' ? 'Rascunho' : 'Pendente'}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 mt-3 text-xs text-gray-500 dark:text-muted-foreground">
                       <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{c.total_recipients}</span>
-                      <span className="flex items-center gap-1 text-green-600"><Send className="h-3.5 w-3.5" />{c.sent_count || 0}</span>
+                      <span className="flex items-center gap-1 text-green-600 dark:text-green-400"><Send className="h-3.5 w-3.5" />{c.sent_count || 0}</span>
                       {failed > 0 && (
-                        <span className="flex items-center gap-1 text-orange-600"><AlertCircle className="h-3.5 w-3.5" />{failed}</span>
+                        <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400"><AlertCircle className="h-3.5 w-3.5" />{failed}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
@@ -1759,7 +1759,7 @@ export default function DisparosPage() {
                           size="sm"
                           variant="outline"
                           disabled={retryingCampaignId === c.id}
-                          className="flex-1 rounded-full h-9 border-orange-200 text-orange-600 hover:bg-orange-50"
+                          className="flex-1 rounded-full h-9 border-orange-200 text-orange-600 dark:text-orange-400 hover:bg-orange-50"
                           onClick={() => retryFailedJobs(c.id)}
                         >
                           {retryingCampaignId === c.id
@@ -1772,7 +1772,7 @@ export default function DisparosPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="rounded-full h-9 border-gray-200 text-green-600"
+                          className="rounded-full h-9 border-gray-200 dark:border-white/15 text-green-600 dark:text-green-400"
                           onClick={() => handleCampaignAction(c.id, c.status === 'paused' ? 'resume' : 'start')}
                         >
                           <Play className="h-4 w-4 mr-2" /> {c.status === 'paused' ? 'Retomar' : 'Iniciar'}
@@ -1782,7 +1782,7 @@ export default function DisparosPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="rounded-full h-9 border-gray-200 text-yellow-600"
+                          className="rounded-full h-9 border-gray-200 dark:border-white/15 text-yellow-600"
                           onClick={() => handleCampaignAction(c.id, 'pause')}
                         >
                           <Pause className="h-4 w-4 mr-2" /> Pausar
@@ -1792,7 +1792,7 @@ export default function DisparosPage() {
                   </Card>
                 );
               }) : (
-                <Card className="rounded-2xl border-none shadow-sm p-10 text-center text-sm text-gray-400">
+                <Card className="rounded-2xl border-none shadow-sm p-10 text-center text-sm text-gray-400 dark:text-foreground/50">
                   Nenhuma campanha ainda.
                 </Card>
               )}
@@ -1812,26 +1812,26 @@ export default function DisparosPage() {
                 </TableHeader>
                 <TableBody>
                   {campaignHistory.length > 0 ? campaignHistory.map((c) => (
-                    <TableRow key={c.id} className="cursor-pointer hover:bg-gray-50/50 transition-colors" onClick={() => {
+                    <TableRow key={c.id} className="cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors" onClick={() => {
                       setSelectedCampaign(c);
                       fetchCampaignLogs(c.id);
                       setView('details');
                     }}>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">{c.title}</span>
-                          <span className="text-[10px] text-gray-400">{new Date(c.created_at).toLocaleString()}</span>
+                          <span className="font-medium text-gray-900 dark:text-foreground">{c.title}</span>
+                          <span className="text-[10px] text-gray-400 dark:text-foreground/50">{new Date(c.created_at).toLocaleString()}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                          <Users className="h-3.5 w-3.5 text-gray-400" />
+                          <Users className="h-3.5 w-3.5 text-gray-400 dark:text-foreground/50" />
                           <span className="text-sm font-medium">{c.total_recipients}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[10px] py-0 h-5 border-gray-100 bg-gray-50/50">
+                          <Badge variant="outline" className="text-[10px] py-0 h-5 border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
                             {c.delay_seconds}s
                           </Badge>
                           {c.status === 'running' && (
@@ -1844,7 +1844,7 @@ export default function DisparosPage() {
                                   stroke="currentColor"
                                   strokeWidth="1.5"
                                   fill="transparent"
-                                  className="text-gray-100"
+                                  className="text-gray-100 dark:text-white/10"
                                 />
                                 <circle
                                   cx="8"
@@ -1854,7 +1854,7 @@ export default function DisparosPage() {
                                   strokeWidth="1.5"
                                   fill="transparent"
                                   strokeDasharray={37.7}
-                                  className="text-[#374DA4] transition-all duration-1000 ease-linear"
+                                  className="text-primary transition-all duration-1000 ease-linear"
                                   style={{
                                     animation: `countdown ${c.delay_seconds}s linear infinite`,
                                     strokeDashoffset: 37.7
@@ -1870,7 +1870,7 @@ export default function DisparosPage() {
                             </div>
                           )}
                           {c.ai_enabled && (
-                            <Badge variant="outline" className="text-[10px] py-0 h-5 border-blue-100 bg-blue-50/50 text-[#374DA4]">
+                            <Badge variant="outline" className="text-[10px] py-0 h-5 border-blue-100 dark:border-blue-500/25 bg-blue-50/50 dark:bg-blue-500/15 text-primary">
                               IA
                             </Badge>
                           )}
@@ -1878,14 +1878,14 @@ export default function DisparosPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className={`text-[10px] ${
-                          c.status === 'running' ? 'bg-blue-50 text-blue-600 animate-pulse' : 
+                          c.status === 'running' ? 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 animate-pulse' : 
                           c.status === 'paused' ? 'bg-yellow-50 text-yellow-600' :
-                          c.status === 'completed' ? 'bg-green-50 text-green-600' : 
-                          c.status === 'completed_with_errors' ? 'bg-orange-50 text-orange-600' :
-                          c.status === 'failed' ? 'bg-red-50 text-red-600' :
-                          c.status === 'cancelled' ? 'bg-red-50 text-red-600' : 
-                          c.status === 'processing' ? 'bg-blue-50 text-blue-600 animate-pulse' :
-                          c.status === 'pending' ? 'bg-gray-50 text-gray-500' : 'bg-gray-50 text-gray-600'
+                          c.status === 'completed' ? 'bg-green-50 dark:bg-green-500/15 text-green-600 dark:text-green-400' : 
+                          c.status === 'completed_with_errors' ? 'bg-orange-50 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400' :
+                          c.status === 'failed' ? 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400' :
+                          c.status === 'cancelled' ? 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400' : 
+                          c.status === 'processing' ? 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 animate-pulse' :
+                          c.status === 'pending' ? 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-muted-foreground' : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-foreground/70'
                         }`}>
                           {c.status === 'running' ? 'Executando' : 
                            c.status === 'processing' ? 'Executando' :
@@ -1900,10 +1900,10 @@ export default function DisparosPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col items-start gap-1">
-                          <span className="text-sm font-bold text-[#374DA4]">{c.sent_count}/{c.total_recipients}</span>
+                          <span className="text-sm font-bold text-primary">{c.sent_count}/{c.total_recipients}</span>
                           <Progress value={(c.sent_count / c.total_recipients) * 100} className="h-1 w-20" />
                           {['running', 'processing', 'pending', 'paused'].includes(c.status) && c.total_recipients > c.sent_count && (
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-[10px] text-gray-500 dark:text-muted-foreground">
                               ~{formatEta(
                                 (c.total_recipients - c.sent_count) *
                                   ((c.delay_mode === 'variable'
@@ -1923,7 +1923,7 @@ export default function DisparosPage() {
                             variant="ghost"
                             size="icon"
                             title="Retomar rascunho (áudios já gerados)"
-                            className="h-8 w-8 rounded-full text-[#374DA4] hover:bg-blue-50"
+                            className="h-8 w-8 rounded-full text-primary hover:bg-blue-50 dark:hover:bg-blue-500/10"
                             onClick={() => resumeDraft(c.id)}
                           >
                             <RefreshCw className="h-4 w-4" />
@@ -1934,7 +1934,7 @@ export default function DisparosPage() {
                             variant="ghost"
                             size="icon"
                             title={c.status === 'paused' ? 'Retomar' : 'Iniciar'}
-                            className="h-8 w-8 rounded-full text-green-600 hover:bg-green-50"
+                            className="h-8 w-8 rounded-full text-green-600 dark:text-green-400 hover:bg-green-50"
                             onClick={() => handleCampaignAction(c.id, c.status === 'paused' ? 'resume' : 'start')}
                           >
                             <Play className="h-4 w-4" />
@@ -1957,7 +1957,7 @@ export default function DisparosPage() {
                             variant="ghost"
                             size="icon"
                             title="Cancelar"
-                            className="h-8 w-8 rounded-full text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 rounded-full text-red-600 dark:text-red-400 hover:bg-red-50"
                             onClick={() => handleCampaignAction(c.id, 'cancel')}
                           >
                             <XCircle className="h-4 w-4" />
@@ -1969,7 +1969,7 @@ export default function DisparosPage() {
                             size="icon"
                             title={`Reenviar ${(c as any).error_count} falha(s)`}
                             disabled={retryingCampaignId === c.id}
-                            className="h-8 w-8 rounded-full text-orange-600 hover:bg-orange-50"
+                            className="h-8 w-8 rounded-full text-orange-600 dark:text-orange-400 hover:bg-orange-50"
                             onClick={() => retryFailedJobs(c.id)}
                           >
                             {retryingCampaignId === c.id
@@ -1988,7 +1988,7 @@ export default function DisparosPage() {
                           <DropdownMenuContent align="end" className="rounded-xl border-none shadow-lg">
                             <DropdownMenuItem
                               onClick={(e) => { e.stopPropagation(); retryFailedJobs(c.id); }}
-                              className="flex items-center gap-2 text-orange-600 cursor-pointer"
+                              className="flex items-center gap-2 text-orange-600 dark:text-orange-400 cursor-pointer"
                             >
                               <RefreshCw className="h-4 w-4" /> Reenviar falhas
                             </DropdownMenuItem>
@@ -1999,12 +1999,12 @@ export default function DisparosPage() {
                               </DropdownMenuItem>
                             )}
                             {c.status === 'paused' && (
-                              <DropdownMenuItem onClick={() => handleCampaignAction(c.id, 'resume')} className="flex items-center gap-2 text-green-600 cursor-pointer">
+                              <DropdownMenuItem onClick={() => handleCampaignAction(c.id, 'resume')} className="flex items-center gap-2 text-green-600 dark:text-green-400 cursor-pointer">
                                 <Play className="h-4 w-4" /> Retomar
                               </DropdownMenuItem>
                             )}
                             {(c.status === 'running' || c.status === 'paused') && (
-                              <DropdownMenuItem onClick={() => handleCampaignAction(c.id, 'cancel')} className="flex items-center gap-2 text-red-600 cursor-pointer">
+                              <DropdownMenuItem onClick={() => handleCampaignAction(c.id, 'cancel')} className="flex items-center gap-2 text-red-600 dark:text-red-400 cursor-pointer">
                                 <XCircle className="h-4 w-4" /> Cancelar
                               </DropdownMenuItem>
                             )}
@@ -2044,7 +2044,7 @@ export default function DisparosPage() {
                     </TableRow>
                   )) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-40 text-center text-gray-400">
+                      <TableCell colSpan={6} className="h-40 text-center text-gray-400 dark:text-foreground/50">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <Database className="h-8 w-8 opacity-20" />
                           <p className="text-sm italic">Nenhuma campanha encontrada.</p>
@@ -2070,8 +2070,8 @@ export default function DisparosPage() {
                       const done = idx < currentStep && !stepError(idx);
                       return (
                         <button key={s.id} onClick={() => goToStep(idx)}
-                          className={`flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${idx === currentStep ? 'bg-[#374DA4] text-white' : locked ? 'bg-white text-gray-300 border border-gray-100' : 'bg-white text-gray-500 border border-gray-100'}`}>
-                          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${idx === currentStep ? 'bg-white text-[#374DA4]' : done ? 'bg-green-100 text-green-600' : 'bg-gray-100'}`}>
+                          className={`flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${idx === currentStep ? 'bg-primary text-white' : locked ? 'bg-white dark:bg-card text-gray-300 dark:text-white/35 border border-gray-100 dark:border-white/10' : 'bg-white dark:bg-card text-gray-500 dark:text-muted-foreground border border-gray-100 dark:border-white/10'}`}>
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${idx === currentStep ? 'bg-white dark:bg-card text-primary' : done ? 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-gray-100 dark:bg-white/10'}`}>
                             {done ? <Check className="h-3 w-3" /> : idx + 1}
                           </span>
                           {s.title}
@@ -2083,11 +2083,11 @@ export default function DisparosPage() {
                   <div className="relative">
                     <AnimatePresence mode="wait">
                       <motion.div key={steps[currentStep].id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                        <Card className="border-none shadow-[0_2px_8px_rgba(0,0,0,0.04)] rounded-2xl bg-white p-4 sm:p-6">
+                        <Card className="border-none shadow-[0_2px_8px_rgba(0,0,0,0.04)] rounded-2xl bg-white dark:bg-card p-4 sm:p-6">
                           {currentStep === 0 && (
                              <div className="space-y-4">
                                <div className="space-y-2">
-                                 <span className="text-sm font-medium text-gray-700">Título da campanha</span>
+                                 <span className="text-sm font-medium text-gray-700 dark:text-foreground/80">Título da campanha</span>
                                  <Input
                                    value={campaignTitle}
                                    onChange={(e) => setCampaignTitle(e.target.value)}
@@ -2099,9 +2099,9 @@ export default function DisparosPage() {
                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                  {sessions.map(s => (
                                    <button key={s.id} onClick={() => setSelectedSessionId(s.id)}
-                                     className={`p-4 rounded-xl border flex flex-col items-start gap-1 transition-all ${selectedSessionId === s.id ? 'border-[#374DA4] bg-[#F0F2FE]' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-                                     <span className="font-medium text-sm text-gray-900">{s.phone_number || s.instance_name}</span>
-                                     {s.phone_number && <span className="text-xs text-gray-500">{s.instance_name}</span>}
+                                     className={`p-4 rounded-xl border flex flex-col items-start gap-1 transition-all ${selectedSessionId === s.id ? 'border-primary bg-[#F0F2FE] dark:bg-primary/20' : 'border-gray-100 dark:border-white/10 bg-white dark:bg-card hover:border-gray-200 dark:hover:border-white/15'}`}>
+                                     <span className="font-medium text-sm text-gray-900 dark:text-foreground">{s.phone_number || s.instance_name}</span>
+                                     {s.phone_number && <span className="text-xs text-gray-500 dark:text-muted-foreground">{s.instance_name}</span>}
                                    </button>
                                  ))}
                                </div>
@@ -2121,12 +2121,12 @@ export default function DisparosPage() {
                                   <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.txt" onChange={handleFileUpload} />
                                 </div>
                               </div>
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border bg-white px-4 py-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-2xl border bg-white dark:bg-card px-4 py-3">
                                 <div className="flex items-center gap-3">
                                   <Switch checked={firstNameOnly} onCheckedChange={setFirstNameOnly} />
                                   <div className="flex flex-col">
                                     <span className="text-sm font-medium">Usar apenas o primeiro nome</span>
-                                    <span className="text-[10px] text-gray-400">Ex.: "MARIA DA SILVA SOUZA" vira "Maria" ao importar a lista.</span>
+                                    <span className="text-[10px] text-gray-400 dark:text-foreground/50">Ex.: "MARIA DA SILVA SOUZA" vira "Maria" ao importar a lista.</span>
                                   </div>
                                 </div>
                                 {recipients.length > 0 && (
@@ -2147,13 +2147,13 @@ export default function DisparosPage() {
                                 <div className="flex flex-col sm:flex-row gap-2">
                                   <Input className="sm:flex-[2]" placeholder="Número (ex: 41996875461)" value={newPhone} onChange={e => setNewPhone(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addRecipient()} />
                                   <Input className="sm:flex-1" placeholder="Nome do Cliente (opcional)" value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addRecipient()} />
-                                  <Button onClick={() => addRecipient()} className="bg-[#374DA4] text-white w-full sm:w-auto"><Plus className="h-4 w-4" /></Button>
+                                  <Button onClick={() => addRecipient()} className="bg-primary text-white w-full sm:w-auto"><Plus className="h-4 w-4" /></Button>
                                 </div>
-                                <p className="text-[10px] text-gray-400 px-1 italic">Dica: Você também pode colar uma lista de números diretamente no campo de telefone.</p>
+                                <p className="text-[10px] text-gray-400 dark:text-foreground/50 px-1 italic">Dica: Você também pode colar uma lista de números diretamente no campo de telefone.</p>
                               </div>
-                              <div className="border rounded-2xl overflow-hidden bg-gray-50/50">
-                                <div className="bg-white px-4 py-2 border-b flex justify-between items-center">
-                                  <span className="text-xs font-medium text-gray-500">{recipients.length} contatos na lista</span>
+                              <div className="border rounded-2xl overflow-hidden bg-gray-50/50 dark:bg-white/5">
+                                <div className="bg-white dark:bg-card px-4 py-2 border-b flex justify-between items-center">
+                                  <span className="text-xs font-medium text-gray-500 dark:text-muted-foreground">{recipients.length} contatos na lista</span>
                                   {recipients.length > 0 && (
                                     <button onClick={() => setRecipients([])} className="text-xs text-red-500 hover:underline">Limpar tudo</button>
                                   )}
@@ -2161,11 +2161,11 @@ export default function DisparosPage() {
                                 <ScrollArea className="h-48">
                                   <div className="p-2 space-y-1">
                                     {recipients.map(r => (
-                                      <div key={r.id} className="flex items-center justify-between p-2 bg-white rounded-xl border border-transparent hover:border-gray-100 group transition-all">
+                                      <div key={r.id} className="flex items-center justify-between p-2 bg-white dark:bg-card rounded-xl border border-transparent hover:border-gray-100 dark:hover:border-white/10 group transition-all">
                                         <div className="flex flex-col">
                                           <span className="text-sm font-medium">{r.phone}</span>
                                           <div className="flex items-center gap-2">
-                                            {r.name && <span className="text-[10px] text-gray-400">{r.name}</span>}
+                                            {r.name && <span className="text-[10px] text-gray-400 dark:text-foreground/50">{r.name}</span>}
                                             {(r.dispatchCount ?? 0) > 0 ? (
                                               <span
                                                 className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700"
@@ -2174,7 +2174,7 @@ export default function DisparosPage() {
                                                 Já recebeu ({r.dispatchCount}x)
                                               </span>
                                             ) : r.dispatchCount === 0 ? (
-                                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-50 text-green-700">Novo contato</span>
+                                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-50 dark:bg-green-500/15 text-green-700">Novo contato</span>
                                             ) : null}
                                           </div>
                                         </div>
@@ -2185,7 +2185,7 @@ export default function DisparosPage() {
                                       </div>
                                     ))}
                                     {recipients.length === 0 && (
-                                      <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                                      <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-foreground/50">
                                         <Database className="h-8 w-8 mb-2 opacity-20" />
                                         <p className="text-sm italic">Nenhum destinatário adicionado</p>
                                       </div>
@@ -2200,7 +2200,7 @@ export default function DisparosPage() {
                               <div className="space-y-4">
                                 <h3 className="text-lg font-semibold">Mensagem e Mídia</h3>
                                 
-                                <div className="flex flex-wrap gap-2 mb-4 p-2 bg-gray-50 rounded-2xl border border-gray-100">
+                                <div className="flex flex-wrap gap-2 mb-4 p-2 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
                                   {[
                                     { id: 'text', label: 'Texto', icon: FileText },
                                     { id: 'image', label: 'Imagem', icon: Image },
@@ -2212,7 +2212,7 @@ export default function DisparosPage() {
                                     <button
                                       key={type.id}
                                       onClick={() => setMediaType(type.id as any)}
-                                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${mediaType === type.id ? 'bg-[#374DA4] text-white shadow-sm' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${mediaType === type.id ? 'bg-primary text-white shadow-sm' : 'bg-white dark:bg-card text-gray-500 dark:text-muted-foreground hover:bg-gray-100 dark:hover:bg-white/10'}`}
                                     >
                                       <type.icon className="h-3.5 w-3.5" />
                                       {type.label}
@@ -2222,8 +2222,8 @@ export default function DisparosPage() {
 
                                 {mediaType === 'voice' ? (
                                   <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-4">
-                                      <div className="flex items-center justify-between text-[#374DA4]">
+                                    <div className="p-4 bg-blue-50/50 dark:bg-blue-500/15 rounded-2xl border border-blue-100 dark:border-blue-500/25 space-y-4">
+                                      <div className="flex items-center justify-between text-primary">
                                         <div className="flex items-center gap-2">
                                           <Mic className="h-4 w-4" />
                                           <span className="text-sm font-bold">Narração Voz IA</span>
@@ -2232,13 +2232,13 @@ export default function DisparosPage() {
                                         
                                       </div>
 
-                                       <p className="text-[11px] text-gray-500">
+                                       <p className="text-[11px] text-gray-500 dark:text-muted-foreground">
                                          Escreva o roteiro aqui. Na próxima etapa você escolhe (ou cria) a voz que vai narrar.
                                        </p>
 
                                       <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                          <span className="text-xs font-bold text-gray-700">Roteiro da Narração</span>
+                                          <span className="text-xs font-bold text-gray-700 dark:text-foreground/80">Roteiro da Narração</span>
                                           <button 
                                             onClick={() => setVoiceSettings({...voiceSettings, script: voiceSettings.script + ' @nome'})}
                                             className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full hover:bg-blue-200 transition-colors"
@@ -2248,7 +2248,7 @@ export default function DisparosPage() {
                                         </div>
                                         <Textarea 
                                           placeholder="Ex: Olá @nome, tudo bem? Temos uma oferta exclusiva para você..." 
-                                          className="min-h-[120px] bg-white border-blue-100 focus:border-[#374DA4] text-sm"
+                                          className="min-h-[120px] bg-white dark:bg-card border-blue-100 dark:border-blue-500/25 focus:border-primary text-sm"
                                           value={voiceSettings.script}
                                           onChange={e => {
                                             const val = e.target.value;
@@ -2263,15 +2263,15 @@ export default function DisparosPage() {
                                         />
                                       </div>
                                       
-                                      <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-blue-100">
+                                      <div className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-xl border border-blue-100 dark:border-blue-500/25">
                                         <div className="flex flex-col">
                                           <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-gray-700">Personalização Inteligente</span>
+                                            <span className="text-xs font-bold text-gray-700 dark:text-foreground/80">Personalização Inteligente</span>
                                             {voiceSettings.script.includes('@nome') && (
-                                              <Badge className="bg-green-100 text-green-700 border-green-200 text-[8px] h-4">@nome detectado</Badge>
+                                              <Badge className="bg-green-100 dark:bg-green-500/20 text-green-700 border-green-200 text-[8px] h-4">@nome detectado</Badge>
                                             )}
                                           </div>
-                                          <span className="text-[10px] text-gray-400">A IA substituirá '@nome' pelo nome do cliente em cada áudio.</span>
+                                          <span className="text-[10px] text-gray-400 dark:text-foreground/50">A IA substituirá '@nome' pelo nome do cliente em cada áudio.</span>
                                         </div>
                                         <Switch 
                                           checked={voiceSettings.mentionNames} 
@@ -2285,7 +2285,7 @@ export default function DisparosPage() {
                                   <div className="space-y-4 animate-in fade-in duration-300">
                                     {mediaType !== 'text' && (
                                       <div className="space-y-2">
-                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Link da Mídia ({mediaType})</span>
+                                        <span className="text-xs font-bold text-gray-400 dark:text-foreground/50 uppercase tracking-widest">Link da Mídia ({mediaType})</span>
                                         <Input 
                                           placeholder={`URL da ${mediaType}...`} 
                                           value={mediaUrl}
@@ -2294,7 +2294,7 @@ export default function DisparosPage() {
                                       </div>
                                     )}
                                     <div className="space-y-2">
-                                      <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Texto da Mensagem</span>
+                                      <span className="text-xs font-bold text-gray-400 dark:text-foreground/50 uppercase tracking-widest">Texto da Mensagem</span>
                                       <Textarea 
                                         placeholder="Digite aqui o texto principal da campanha..." 
                                         className="min-h-[120px]"
@@ -2306,11 +2306,11 @@ export default function DisparosPage() {
                                 )}
 
                                 {/* Mensagens em sequência */}
-                                <div className="space-y-3 pt-4 border-t border-gray-100">
+                                <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-white/10">
                                   <div className="flex items-start justify-between gap-4">
                                     <div className="flex flex-col">
-                                      <span className="text-sm font-semibold text-gray-700">Enviar outra mensagem em seguida</span>
-                                      <span className="text-[11px] text-gray-400">
+                                      <span className="text-sm font-semibold text-gray-700 dark:text-foreground/80">Enviar outra mensagem em seguida</span>
+                                      <span className="text-[11px] text-gray-400 dark:text-foreground/50">
                                         Encadeie envios: ex. um áudio e logo depois uma imagem. Cada item é enviado na ordem, respeitando o intervalo.
                                       </span>
                                     </div>
@@ -2329,9 +2329,9 @@ export default function DisparosPage() {
                                   {followUpsEnabled && (
                                     <div className="space-y-3">
                                       {followUps.map((f, idx) => (
-                                        <div key={f.id} className="p-3 rounded-2xl border border-gray-100 bg-gray-50 space-y-3">
+                                        <div key={f.id} className="p-3 rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/5 space-y-3">
                                           <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                            <span className="text-[11px] font-bold text-gray-500 dark:text-muted-foreground uppercase tracking-wider">
                                               Mensagem {idx + 2}
                                             </span>
                                             <Button
@@ -2355,7 +2355,7 @@ export default function DisparosPage() {
                                               <button
                                                 key={t.id}
                                                 onClick={() => setFollowUps(prev => prev.map(x => x.id === f.id ? { ...x, media_type: t.id as any, media_url: t.id === 'text' ? '' : x.media_url } : x))}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all ${f.media_type === t.id ? 'bg-[#374DA4] text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all ${f.media_type === t.id ? 'bg-primary text-white' : 'bg-white dark:bg-card text-gray-500 dark:text-muted-foreground hover:bg-gray-100 dark:hover:bg-white/10'}`}
                                               >
                                                 <t.icon className="h-3 w-3" />
                                                 {t.label}
@@ -2368,7 +2368,7 @@ export default function DisparosPage() {
                                               placeholder={`URL da ${f.media_type}...`}
                                               value={f.media_url}
                                               onChange={e => setFollowUps(prev => prev.map(x => x.id === f.id ? { ...x, media_url: e.target.value } : x))}
-                                              className="bg-white"
+                                              className="bg-white dark:bg-card"
                                             />
                                           )}
 
@@ -2376,7 +2376,7 @@ export default function DisparosPage() {
                                             placeholder={f.media_type === 'text' ? 'Texto desta mensagem...' : 'Legenda (opcional)...'}
                                             value={f.message}
                                             onChange={e => setFollowUps(prev => prev.map(x => x.id === f.id ? { ...x, message: e.target.value } : x))}
-                                            className="min-h-[70px] bg-white text-sm"
+                                            className="min-h-[70px] bg-white dark:bg-card text-sm"
                                           />
                                         </div>
                                       ))}
@@ -2397,8 +2397,8 @@ export default function DisparosPage() {
                             {steps[currentStep].id === 'voice-select' && (
                               <div className="space-y-6">
                                 <div className="space-y-1">
-                                  <h3 className="text-lg font-semibold text-[#374DA4]">Escolha a voz</h3>
-                                  <p className="text-sm text-gray-500">Selecione uma voz pronta ou crie a sua clonando amostras de áudio.</p>
+                                  <h3 className="text-lg font-semibold text-primary">Escolha a voz</h3>
+                                  <p className="text-sm text-gray-500 dark:text-muted-foreground">Selecione uma voz pronta ou crie a sua clonando amostras de áudio.</p>
                                 </div>
 
                                 <div className="space-y-2">
@@ -2413,16 +2413,16 @@ export default function DisparosPage() {
                                     <div
                                       key={v.id}
                                       onClick={() => setVoiceSettings({ ...voiceSettings, voiceId: v.id })}
-                                      className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${voiceSettings.voiceId === v.id ? 'border-[#374DA4] bg-blue-50/60' : 'border-gray-100 bg-white hover:border-gray-200'}`}
+                                      className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${voiceSettings.voiceId === v.id ? 'border-primary bg-blue-50/60' : 'border-gray-100 dark:border-white/10 bg-white dark:bg-card hover:border-gray-200 dark:hover:border-white/15'}`}
                                     >
                                       <div className="min-w-0">
-                                        <p className="text-sm font-medium text-gray-800 truncate">{v.name}</p>
-                                        <p className="text-[11px] text-gray-400">{v.desc}</p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-foreground/90 truncate">{v.name}</p>
+                                        <p className="text-[11px] text-gray-400 dark:text-foreground/50">{v.desc}</p>
                                       </div>
                                       {voicePreviewUrls[v.id] ? (
                                         <audio src={voicePreviewUrls[v.id]} controls preload="none" className="h-8 max-w-[190px]" onClick={e => e.stopPropagation()} />
                                       ) : (
-                                        <span className="text-[10px] text-gray-400">sem prévia</span>
+                                        <span className="text-[10px] text-gray-400 dark:text-foreground/50">sem prévia</span>
                                       )}
                                     </div>
                                   ))}
@@ -2431,45 +2431,45 @@ export default function DisparosPage() {
                                 {!showCloneForm ? (
                                   <button
                                     onClick={() => setShowCloneForm(true)}
-                                    className="text-sm text-[#374DA4] font-medium hover:underline flex items-center gap-1"
+                                    className="text-sm text-primary font-medium hover:underline flex items-center gap-1"
                                   >
                                     <Plus className="h-4 w-4" /> Criar minha própria voz
                                   </button>
                                 ) : (
-                                  <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                                  <div className="space-y-4 bg-gray-50 dark:bg-white/5 p-5 rounded-2xl border border-gray-100 dark:border-white/10">
                                     <div className="flex items-center justify-between">
-                                      <h4 className="text-sm font-semibold text-gray-800">Clonar minha voz</h4>
-                                      <button onClick={() => setShowCloneForm(false)} className="text-xs text-gray-400 hover:text-gray-600">Cancelar</button>
+                                      <h4 className="text-sm font-semibold text-gray-800 dark:text-foreground/90">Clonar minha voz</h4>
+                                      <button onClick={() => setShowCloneForm(false)} className="text-xs text-gray-400 dark:text-foreground/50 hover:text-gray-600">Cancelar</button>
                                     </div>
 
-                                    <div className="text-[11px] text-gray-500 bg-white border border-gray-100 rounded-xl p-3 space-y-1">
-                                      <p className="font-medium text-gray-700">Requisitos obrigatórios:</p>
+                                    <div className="text-[11px] text-gray-500 dark:text-muted-foreground bg-white dark:bg-card border border-gray-100 dark:border-white/10 rounded-xl p-3 space-y-1">
+                                      <p className="font-medium text-gray-700 dark:text-foreground/80">Requisitos obrigatórios:</p>
                                       <p>• <strong>Regra:</strong> Anexe exatamente 5 áudios, todos <strong>diferentes</strong>.</p>
                                       <p>• Mínimo de 30 segundos por áudio — o ideal é 1 minuto.</p>
                                       <p>• Fala clara, sem música de fundo e sem ruído. Formatos .mp3, .wav ou .m4a (até 10 MB cada).</p>
                                     </div>
 
                                     <div className="space-y-2">
-                                      <span className="text-sm font-medium text-gray-700">Nome da voz</span>
+                                      <span className="text-sm font-medium text-gray-700 dark:text-foreground/80">Nome da voz</span>
                                       <Input
                                         placeholder="Ex: Minha Voz, Voz do CEO..."
                                         value={cloneName}
                                         onChange={e => setCloneName(e.target.value)}
-                                        className="bg-white"
+                                        className="bg-white dark:bg-card"
                                       />
                                     </div>
 
                                     <div className="space-y-2">
-                                      <span className="text-sm font-medium text-gray-700">Amostras de áudio ({cloneFiles.length}/5)</span>
+                                      <span className="text-sm font-medium text-gray-700 dark:text-foreground/80">Amostras de áudio ({cloneFiles.length}/5)</span>
                                       <div
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-[#374DA4] transition-colors bg-white"
+                                        className="border-2 border-dashed border-gray-200 dark:border-white/15 rounded-xl p-6 text-center cursor-pointer hover:border-primary transition-colors bg-white dark:bg-card"
                                       >
-                                        <Upload className="h-7 w-7 mx-auto text-gray-400 mb-2" />
-                                        <p className="text-sm text-gray-500">
+                                        <Upload className="h-7 w-7 mx-auto text-gray-400 dark:text-foreground/50 mb-2" />
+                                        <p className="text-sm text-gray-500 dark:text-muted-foreground">
                                           {isConvertingAudio ? 'Convertendo áudio para MP3...' : 'Clique para selecionar os áudios'}
                                         </p>
-                                        <p className="text-[11px] text-gray-400 mt-1">MP3, WAV, OPUS ou OGG (.opus é convertido automaticamente)</p>
+                                        <p className="text-[11px] text-gray-400 dark:text-foreground/50 mt-1">MP3, WAV, OPUS ou OGG (.opus é convertido automaticamente)</p>
 
                                         <input
                                           type="file"
@@ -2488,13 +2488,13 @@ export default function DisparosPage() {
                                       {cloneFiles.length > 0 && (
                                         <div className="space-y-2 mt-2">
                                           {cloneFiles.map((f, i) => (
-                                            <div key={`${f.name}-${f.size}-${i}`} className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl p-2">
+                                            <div key={`${f.name}-${f.size}-${i}`} className="flex items-center gap-2 bg-white dark:bg-card border border-gray-100 dark:border-white/10 rounded-xl p-2">
                                               <div className="min-w-0 flex-1">
-                                                <p className="text-xs font-medium text-gray-700 truncate">{f.name}</p>
-                                                <p className="text-[10px] text-gray-400">{(f.size / 1024 / 1024).toFixed(2)} MB</p>
+                                                <p className="text-xs font-medium text-gray-700 dark:text-foreground/80 truncate">{f.name}</p>
+                                                <p className="text-[10px] text-gray-400 dark:text-foreground/50">{(f.size / 1024 / 1024).toFixed(2)} MB</p>
                                               </div>
                                               <audio src={cloneFileUrls[i]} controls preload="metadata" className="h-8 max-w-[190px]" />
-                                              <button onClick={() => setCloneFiles(cloneFiles.filter((_, idx) => idx !== i))} className="text-gray-300 hover:text-red-500">
+                                              <button onClick={() => setCloneFiles(cloneFiles.filter((_, idx) => idx !== i))} className="text-gray-300 dark:text-white/35 hover:text-red-500 dark:hover:text-red-400">
                                                 <XCircle className="h-4 w-4" />
                                               </button>
                                             </div>
@@ -2504,7 +2504,7 @@ export default function DisparosPage() {
                                     </div>
 
                                     <Button
-                                      className="w-full bg-[#374DA4] text-white rounded-xl"
+                                      className="w-full bg-primary text-white rounded-xl"
                                       onClick={createClonedVoice}
                                       disabled={isCloning || cloneFiles.length < 5 || !cloneName.trim()}
                                     >
@@ -2521,15 +2521,15 @@ export default function DisparosPage() {
                                 <div className="space-y-4">
                                   <div className="flex items-center justify-between">
                                     <div className="space-y-1">
-                                      <h3 className="text-lg font-semibold text-[#374DA4]">Revisão de Vozes</h3>
-                                      <p className="text-sm text-gray-500">Ouça e aprove o áudio personalizado para cada destinatário.</p>
+                                      <h3 className="text-lg font-semibold text-primary">Revisão de Vozes</h3>
+                                      <p className="text-sm text-gray-500 dark:text-muted-foreground">Ouça e aprove o áudio personalizado para cada destinatário.</p>
                                     </div>
                                     <div className="flex gap-2">
                                       <Button 
                                         size="sm" 
                                         onClick={() => generateAllVoices()} 
                                         disabled={isGeneratingVoices}
-                                        className="bg-blue-50 text-[#374DA4] hover:bg-blue-100 border-none rounded-full"
+                                        className="bg-blue-50 dark:bg-blue-500/15 text-primary hover:bg-blue-100 border-none rounded-full"
                                       >
                                         {isGeneratingVoices ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
                                         Gerar pendentes
@@ -2539,7 +2539,7 @@ export default function DisparosPage() {
                                           size="sm"
                                           variant="outline"
                                           onClick={stopVoiceGeneration}
-                                          className="rounded-full border-gray-200"
+                                          className="rounded-full border-gray-200 dark:border-white/15"
                                         >
                                           <Pause className="h-3 w-3 mr-2" /> Pausar
                                         </Button>
@@ -2557,7 +2557,7 @@ export default function DisparosPage() {
                                         size="sm" 
                                         onClick={approveAllVoices}
                                         disabled={!recipients.some(r => r.voiceUrl) || isGeneratingVoices}
-                                        className="bg-green-50 text-green-700 hover:bg-green-100 border-none rounded-full"
+                                        className="bg-green-50 dark:bg-green-500/15 text-green-700 hover:bg-green-100 border-none rounded-full"
                                       >
                                         <Check className="h-3 w-3 mr-2" />
                                         Aprovar Todos
@@ -2567,9 +2567,9 @@ export default function DisparosPage() {
 
                                   {(isGeneratingVoices || recipients.some(r => r.voiceUrl)) && (
                                     <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                      <div className="flex items-center justify-between text-[10px] text-gray-500 font-medium px-1">
+                                      <div className="flex items-center justify-between text-[10px] text-gray-500 dark:text-muted-foreground font-medium px-1">
                                         <span className="flex items-center gap-2">
-                                          {isGeneratingVoices && <Loader2 className="h-3 w-3 animate-spin text-[#374DA4]" />}
+                                          {isGeneratingVoices && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
                                           {isGeneratingVoices
                                             ? `IA ElevenLabs processando${voiceBatch ? ` — lote ${voiceBatch.current}/${voiceBatch.total}` : ''}...`
                                             : 'Áudios salvos com segurança (backup automático)'}
@@ -2577,7 +2577,7 @@ export default function DisparosPage() {
                                         <span>
                                           {recipients.filter(r => r.voiceUrl).length} de {recipients.length} concluídos
                                           {voiceEta && voiceEta.etaSec > 0 && (
-                                            <span className="ml-2 text-[#374DA4] font-semibold">
+                                            <span className="ml-2 text-primary font-semibold">
                                               • restam ~{formatEta(voiceEta.etaSec)} (fim ~{etaClock(voiceEta.etaSec)})
                                             </span>
                                           )}
@@ -2585,7 +2585,7 @@ export default function DisparosPage() {
                                       </div>
                                       <Progress 
                                         value={(recipients.filter(r => r.voiceUrl).length / Math.max(1, recipients.length)) * 100} 
-                                        className="h-1.5 bg-blue-50"
+                                        className="h-1.5 bg-blue-50 dark:bg-blue-500/15"
                                       />
                                     </div>
                                   )}
@@ -2595,14 +2595,14 @@ export default function DisparosPage() {
                                 <ScrollArea className="h-[400px] pr-2">
                                   <div className="grid gap-3">
                                     {recipients.map((r) => (
-                                      <div key={r.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between gap-4">
+                                      <div key={r.id} className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 flex items-center justify-between gap-4">
                                         <div className="flex items-center gap-3">
-                                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${r.voiceApproved ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-[#374DA4]'}`}>
+                                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${r.voiceApproved ? 'bg-green-100 dark:bg-green-500/20 text-green-700' : 'bg-blue-100 text-primary'}`}>
                                             {r.voiceApproved ? <Check className="h-5 w-5" /> : (r.name || r.phone).charAt(0).toUpperCase()}
                                           </div>
                                           <div>
                                             <p className="font-semibold text-sm">{r.name || 'Sem nome'}</p>
-                                            <p className="text-[10px] text-gray-500">{r.phone}</p>
+                                            <p className="text-[10px] text-gray-500 dark:text-muted-foreground">{r.phone}</p>
                                           </div>
                                         </div>
 
@@ -2614,7 +2614,7 @@ export default function DisparosPage() {
                                                 <Button 
                                                   size="icon" 
                                                   variant="outline" 
-                                                  className={`h-8 w-8 rounded-full ${r.voiceApproved === true ? 'bg-green-500 text-white border-green-500' : 'text-gray-400'}`}
+                                                  className={`h-8 w-8 rounded-full ${r.voiceApproved === true ? 'bg-green-500 text-white border-green-500' : 'text-gray-400 dark:text-foreground/50'}`}
                                                   onClick={() => toggleVoiceApproval(r.id, true)}
                                                 >
                                                   <Check className="h-4 w-4" />
@@ -2634,7 +2634,7 @@ export default function DisparosPage() {
                                               size="sm" 
                                               variant="ghost" 
                                               onClick={() => generateVoice(r.id)}
-                                              className="text-[10px] text-blue-600"
+                                              className="text-[10px] text-blue-600 dark:text-blue-300"
                                             >
                                               <Play className="h-3 w-3 mr-1" /> Gerar Voz
                                             </Button>
@@ -2651,33 +2651,33 @@ export default function DisparosPage() {
                               <div className="space-y-6">
                                 <div className="space-y-1">
                                   <h3 className="text-lg font-semibold">Finalização</h3>
-                                  <p className="text-sm text-gray-500">Tudo pronto! Revise as informações finais e inicie a campanha.</p>
+                                  <p className="text-sm text-gray-500 dark:text-muted-foreground">Tudo pronto! Revise as informações finais e inicie a campanha.</p>
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-6 pt-4 border-t">
                                   <div className="space-y-4">
                                     <div className="space-y-1">
-                                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Conexão de Saída</span>
-                                      <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-[#F0F2FE] flex items-center justify-center text-[#374DA4]">
+                                      <span className="text-xs font-semibold text-gray-400 dark:text-foreground/50 uppercase tracking-wider">Conexão de Saída</span>
+                                      <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10">
+                                        <div className="w-8 h-8 rounded-full bg-[#F0F2FE] dark:bg-primary/20 flex items-center justify-center text-primary">
                                           <Phone className="h-4 w-4" />
                                         </div>
                                         <div className="flex flex-col">
                                           <span className="text-sm font-medium">{selectedSession?.phone_number || selectedSession?.instance_name}</span>
-                                          <span className="text-[10px] text-gray-400">Canal Ativo</span>
+                                          <span className="text-[10px] text-gray-400 dark:text-foreground/50">Canal Ativo</span>
                                         </div>
                                       </div>
                                     </div>
 
                                     <div className="space-y-1">
-                                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Configurações</span>
+                                      <span className="text-xs font-semibold text-gray-400 dark:text-foreground/50 uppercase tracking-wider">Configurações</span>
                                       <div className="grid grid-cols-2 gap-2">
-                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                          <span className="block text-[10px] text-gray-400 uppercase">Intervalo</span>
+                                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10">
+                                          <span className="block text-[10px] text-gray-400 dark:text-foreground/50 uppercase">Intervalo</span>
                                           <span className="text-sm font-medium">{delaySeconds}s</span>
                                         </div>
-                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                          <span className="block text-[10px] text-gray-400 uppercase">IA Ativa</span>
+                                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10">
+                                          <span className="block text-[10px] text-gray-400 dark:text-foreground/50 uppercase">IA Ativa</span>
                                           <span className="text-sm font-medium">
                                             {aiEnabled ? (aiAgents.find(a => a.id === selectedAgentId)?.name || 'Sim') : 'Não'}
                                           </span>
@@ -2688,27 +2688,27 @@ export default function DisparosPage() {
 
                                   <div className="space-y-4">
                                     <div className="space-y-1">
-                                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Destinatários</span>
-                                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
+                                      <span className="text-xs font-semibold text-gray-400 dark:text-foreground/50 uppercase tracking-wider">Destinatários</span>
+                                      <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                          <Users className="h-4 w-4 text-gray-400" />
+                                          <Users className="h-4 w-4 text-gray-400 dark:text-foreground/50" />
                                           <span className="text-sm font-medium">{mediaType === 'voice' ? recipients.filter(r => r.voiceUrl).length : recipients.length} contatos</span>
                                         </div>
-                                        <Badge variant="outline" className={`text-[10px] bg-white ${mediaType === 'voice' && !recipients.some(r => r.voiceUrl) ? 'text-amber-500 border-amber-200' : 'text-green-500 border-green-200'}`}>
+                                        <Badge variant="outline" className={`text-[10px] bg-white dark:bg-card ${mediaType === 'voice' && !recipients.some(r => r.voiceUrl) ? 'text-amber-500 border-amber-200' : 'text-green-500 border-green-200'}`}>
                                           {mediaType === 'voice' ? (recipients.some(r => r.voiceUrl) ? 'Parcialmente Pronto' : 'Aguardando Vozes') : 'Pronto'}
                                         </Badge>
                                       </div>
                                     </div>
 
                                     <div className="space-y-1">
-                                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Conteúdo</span>
-                                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 min-h-[80px]">
-                                        <span className="block text-[10px] text-gray-400 uppercase mb-1">Tipo de Mídia</span>
+                                      <span className="text-xs font-semibold text-gray-400 dark:text-foreground/50 uppercase tracking-wider">Conteúdo</span>
+                                      <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 min-h-[80px]">
+                                        <span className="block text-[10px] text-gray-400 dark:text-foreground/50 uppercase mb-1">Tipo de Mídia</span>
                                         <div className="flex items-center gap-2 mb-2">
-                                          <Badge className="bg-[#374DA4] text-[10px] uppercase">{mediaType}</Badge>
+                                          <Badge className="bg-primary text-[10px] uppercase">{mediaType}</Badge>
                                         </div>
-                                        <span className="block text-[10px] text-gray-400 uppercase mb-1">Prévia</span>
-                                        <p className="text-xs text-gray-600 line-clamp-3">
+                                        <span className="block text-[10px] text-gray-400 dark:text-foreground/50 uppercase mb-1">Prévia</span>
+                                        <p className="text-xs text-gray-600 dark:text-foreground/70 line-clamp-3">
                                           {mediaType === 'voice' ? voiceSettings.script : (message || 'Nenhuma mensagem escrita')}
                                         </p>
                                       </div>
@@ -2717,7 +2717,7 @@ export default function DisparosPage() {
                                 </div>
 
                                 {delaySeconds <= 10 && (
-                                  <div className="flex items-start gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-100 text-xs">
+                                  <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-500/15 text-red-700 rounded-xl border border-red-100 text-xs">
                                     <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
                                     <p>Atenção: O intervalo de 10s aumenta significativamente o risco de banimento da sua conta WhatsApp pela Meta.</p>
                                   </div>
@@ -2731,16 +2731,16 @@ export default function DisparosPage() {
                 </div>
                 
                 <div className="space-y-6">
-                  <Card className="border-none shadow-[0_2px_8px_rgba(0,0,0,0.04)] rounded-2xl bg-white p-4 sm:p-6">
+                  <Card className="border-none shadow-[0_2px_8px_rgba(0,0,0,0.04)] rounded-2xl bg-white dark:bg-card p-4 sm:p-6">
                      <h3 className="font-semibold mb-4">Resumo</h3>
                      <div className="space-y-3">
-                        <div className="flex justify-between"><span>Conexão:</span> <span className="text-[#374DA4] font-medium">{selectedSession?.phone_number || selectedSession?.instance_name || '—'}</span></div>
+                        <div className="flex justify-between"><span>Conexão:</span> <span className="text-primary font-medium">{selectedSession?.phone_number || selectedSession?.instance_name || '—'}</span></div>
                         <div className="flex justify-between"><span>Destinatários:</span> <span>{mediaType === 'voice' ? recipients.filter(r => r.voiceUrl).length : recipients.length}</span></div>
                         <div className="flex justify-between">
                           <span>Previsão de término:</span>
-                          <span className="text-[#374DA4] font-medium text-right">
+                          <span className="text-primary font-medium text-right">
                             ~{formatEta(dispatchEtaSeconds(batchSize > 0 ? Math.min(batchSize, (mediaType === 'voice' ? recipients.filter(r => r.voiceUrl).length : recipients.length)) : (mediaType === 'voice' ? recipients.filter(r => r.voiceUrl).length : recipients.length)))}
-                            <span className="block text-[10px] text-gray-500 font-normal">
+                            <span className="block text-[10px] text-gray-500 dark:text-muted-foreground font-normal">
                               {batchSize > 0 ? `por etapa de ${batchSize} • ` : ''}conclusão ~{etaClock(dispatchEtaSeconds(batchSize > 0 ? Math.min(batchSize, (mediaType === 'voice' ? recipients.filter(r => r.voiceUrl).length : recipients.length)) : (mediaType === 'voice' ? recipients.filter(r => r.voiceUrl).length : recipients.length)))}
                             </span>
                           </span>
@@ -2817,14 +2817,14 @@ export default function DisparosPage() {
                           </div>
                           {batchSize > 0 && (
                             <>
-                              <div className="text-[10px] text-gray-500 text-right leading-relaxed">
+                              <div className="text-[10px] text-gray-500 dark:text-muted-foreground text-right leading-relaxed">
                                 Serão {Math.ceil(recipients.length / batchSize)} etapa(s) de até {batchSize} envios.
                                 {autoNextBatch
                                   ? ' As etapas seguem automaticamente.'
                                   : ' Ao terminar cada etapa a campanha pausa e você libera a próxima no botão ▶.'}
                               </div>
                               <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-600">Continuar automaticamente</span>
+                                <span className="text-xs text-gray-600 dark:text-foreground/70">Continuar automaticamente</span>
                                 <Switch checked={autoNextBatch} onCheckedChange={setAutoNextBatch} />
                               </div>
                             </>
@@ -2836,13 +2836,13 @@ export default function DisparosPage() {
                         <div className="border-t pt-3 mt-1 space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="flex items-center gap-1">
-                              <Sparkles className="h-3.5 w-3.5 text-[#374DA4]" /> IA qualifica respostas
+                              <Sparkles className="h-3.5 w-3.5 text-primary" /> IA qualifica respostas
                             </span>
                             <Switch checked={replyAiEnabled} onCheckedChange={setReplyAiEnabled} />
                           </div>
                           {replyAiEnabled && (
                             <div className="space-y-2">
-                              <p className="text-[10px] text-gray-500 leading-relaxed">
+                              <p className="text-[10px] text-gray-500 dark:text-muted-foreground leading-relaxed">
                                 Quando o destinatário responder, a IA analisa se há interesse. Se sim, envia o link abaixo automaticamente.
                               </p>
                               <Input
@@ -2891,7 +2891,7 @@ export default function DisparosPage() {
                                     <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
                                   ))}
                                   {aiAgents.length === 0 && (
-                                    <div className="p-2 text-[10px] text-gray-400 italic">Nenhum agente configurado</div>
+                                    <div className="p-2 text-[10px] text-gray-400 dark:text-foreground/50 italic">Nenhum agente configurado</div>
                                   )}
                                 </SelectContent>
                               </Select>
@@ -2918,14 +2918,14 @@ export default function DisparosPage() {
                                     </SelectItem>
                                   ))}
                                   {chatbotFlows.length === 0 && (
-                                    <div className="p-2 text-[10px] text-gray-400 italic">Nenhum fluxo criado</div>
+                                    <div className="p-2 text-[10px] text-gray-400 dark:text-foreground/50 italic">Nenhum fluxo criado</div>
                                   )}
                                 </SelectContent>
                               </Select>
                             </div>
                           )}
                           {(aiEnabled || chatbotEnabled) && (
-                            <p className="text-[10px] text-gray-400 leading-snug">
+                            <p className="text-[10px] text-gray-400 dark:text-foreground/50 leading-snug">
                               Quando o destinatário responder, {aiEnabled ? 'o agente de IA assume a conversa' : 'o fluxo do chatbot é executado'} automaticamente.
                             </p>
                           )}
@@ -2950,7 +2950,7 @@ export default function DisparosPage() {
 
               {/* Barra de ação fixa (mobile) */}
               <div
-                className="lg:hidden fixed left-0 right-0 z-50 border-t border-gray-100 bg-white/95 backdrop-blur-sm px-4 py-3 bottom-[calc(68px+env(safe-area-inset-bottom))] md:bottom-0 md:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+                className="lg:hidden fixed left-0 right-0 z-50 border-t border-gray-100 dark:border-white/10 bg-white/95 backdrop-blur-sm px-4 py-3 bottom-[calc(68px+env(safe-area-inset-bottom))] md:bottom-0 md:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
               >
                 <div className="flex items-center gap-3">
                   <Button variant="outline" className="rounded-full h-11 px-4 shrink-0" onClick={goBack}>
@@ -2973,7 +2973,7 @@ export default function DisparosPage() {
 
       <Dialog open={isImportingFromSession} onOpenChange={setIsImportingFromSession}>
         <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] max-h-[85dvh] overflow-y-auto rounded-3xl p-0 border-none">
-          <DialogHeader className="p-6 bg-[#374DA4] text-white">
+          <DialogHeader className="p-6 bg-primary text-white">
             <DialogTitle className="flex items-center gap-2 text-white">
               <Users className="h-5 w-5" /> Importar contatos da conexão
             </DialogTitle>
@@ -2983,23 +2983,23 @@ export default function DisparosPage() {
             <ScrollArea className="h-[400px] pr-4">
               <div className="space-y-2">
                 {contacts.length > 0 ? contacts.map(c => (
-                  <div key={c.id} className="flex items-center justify-between p-3 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all cursor-pointer"
+                  <div key={c.id} className="flex items-center justify-between p-3 rounded-2xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 transition-all cursor-pointer"
                     onClick={() => {
                       addContactsFromSession([c]);
                     }}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#374DA4] font-bold">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center text-primary font-bold">
                         {(c.contact_name || '?').charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="font-semibold text-sm">{c.contact_name || 'Sem nome'}</p>
-                        <p className="text-xs text-gray-500">{c.contact_phone}</p>
+                        <p className="text-xs text-gray-500 dark:text-muted-foreground">{c.contact_phone}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="rounded-full h-8 text-[#374DA4]">Selecionar</Button>
+                    <Button variant="ghost" size="sm" className="rounded-full h-8 text-primary">Selecionar</Button>
                   </div>
                 )) : (
-                  <div className="text-center py-20 text-gray-400">
+                  <div className="text-center py-20 text-gray-400 dark:text-foreground/50">
                     <Database className="h-10 w-10 mx-auto mb-2 opacity-20" />
                     <p>Nenhuma conversa encontrada nesta sessão.</p>
                   </div>
@@ -3010,7 +3010,7 @@ export default function DisparosPage() {
             {contacts.length > 0 && (
               <div className="mt-6 flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setIsImportingFromSession(false)} className="rounded-full">Cancelar</Button>
-                <Button onClick={() => addContactsFromSession(contacts)} className="bg-[#374DA4] text-white rounded-full">Importar Todos ({contacts.length})</Button>
+                <Button onClick={() => addContactsFromSession(contacts)} className="bg-primary text-white rounded-full">Importar Todos ({contacts.length})</Button>
               </div>
             )}
           </div>

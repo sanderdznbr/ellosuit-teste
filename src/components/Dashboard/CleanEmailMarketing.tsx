@@ -464,7 +464,7 @@ const CleanEmailMarketing: React.FC = () => {
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-semibold text-foreground truncate">{email.subject}</p>
                         {email.opened ? (
-                            <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30">
+                            <Badge className="bg-green-500/20 text-green-600 dark:text-green-400 dark:text-green-400 border-green-500/30">
                               <Eye className="h-3 w-3 mr-1" />
                               Aberto
                             </Badge>
@@ -751,7 +751,7 @@ const CleanEmailMarketing: React.FC = () => {
       {!contentMode ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card 
-            className="cursor-pointer hover:shadow-lg transition-all group border-2 hover:border-[#374DA4]/40"
+            className="cursor-pointer hover:shadow-lg transition-all group border-2 hover:border-primary/40"
             onClick={() => setContentMode('template')}
           >
             <CardContent className="p-8 text-center">
@@ -771,7 +771,7 @@ const CleanEmailMarketing: React.FC = () => {
           </Card>
           
           <Card 
-            className="cursor-pointer hover:shadow-lg transition-all group border-2 hover:border-[#374DA4]/40"
+            className="cursor-pointer hover:shadow-lg transition-all group border-2 hover:border-primary/40"
             onClick={goToBuilder}
           >
             <CardContent className="p-8 text-center">
@@ -815,7 +815,7 @@ const CleanEmailMarketing: React.FC = () => {
                     key={template.id}
                     className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
                       isSelected 
-                        ? 'border-[#374DA4] bg-[#374DA4]/5 ring-1 ring-[#374DA4]/20' 
+                        ? 'border-primary bg-primary/5 ring-1 ring-[#374DA4]/20' 
                         : 'hover:bg-muted/50 hover:border-muted-foreground/20'
                     }`}
                     onClick={() => selectTemplate(template)}
@@ -937,7 +937,7 @@ const CleanEmailMarketing: React.FC = () => {
           <CardContent className="p-6">
             <p className="text-sm font-medium text-muted-foreground mb-3">Preview do email:</p>
             <div 
-              className="prose prose-sm max-w-none bg-white dark:bg-muted/20 rounded-lg border p-6 max-h-64 overflow-y-auto"
+              className="prose prose-sm max-w-none bg-white dark:bg-card dark:bg-muted/20 rounded-lg border p-6 max-h-64 overflow-y-auto"
               dangerouslySetInnerHTML={{ __html: content || '<p class="text-muted-foreground italic">Sem conteúdo</p>' }}
             />
           </CardContent>
@@ -1005,13 +1005,13 @@ const CleanEmailMarketing: React.FC = () => {
     const detail = campaignGroups.find((g) => g.key === campaignDetail) || null;
 
     return (
-      <div className="min-h-full bg-[#faf9f7] p-4 sm:p-6 pb-[13rem] md:pb-32 lg:pb-6 overscroll-contain">
+      <div className="min-h-full bg-[#faf9f7] dark:bg-background p-4 sm:p-6 pb-[13rem] md:pb-32 lg:pb-6 overscroll-contain">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-[#374DA4]">Email Marketing</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-primary">Email Marketing</h1>
             <Button
               onClick={() => { setCampaignDetail(null); setCurrentStep(1); setView('wizard'); }}
-              className="bg-[#374DA4] text-white rounded-full shrink-0 hover:bg-[#2f428d]"
+              className="bg-primary text-white rounded-full shrink-0 hover:bg-[#2f428d] dark:hover:bg-primary/80"
             >
               <Plus className="h-4 w-4 mr-2" /> Nova Campanha
             </Button>
@@ -1020,7 +1020,7 @@ const CleanEmailMarketing: React.FC = () => {
           {detail ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
-                <Button variant="ghost" onClick={() => setCampaignDetail(null)} className="rounded-full hover:bg-white/50">
+                <Button variant="ghost" onClick={() => setCampaignDetail(null)} className="rounded-full hover:bg-white/50 dark:hover:bg-white/5">
                   <ChevronLeft className="h-4 w-4 mr-2" /> Voltar
                 </Button>
               </div>
@@ -1035,36 +1035,36 @@ const CleanEmailMarketing: React.FC = () => {
                   },
                   { label: 'Enviado em', value: new Date(detail.emails[0]?.sent_at || Date.now()).toLocaleDateString('pt-BR') },
                 ].map((stat, i) => (
-                  <div key={i} className="bg-white/50 backdrop-blur-sm p-5 rounded-2xl border border-white shadow-sm">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                    <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                  <div key={i} className="bg-white/50 dark:bg-white/5 backdrop-blur-sm p-5 rounded-2xl border border-white dark:border-white/10 shadow-sm">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-foreground/50 uppercase tracking-widest mb-1">{stat.label}</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-foreground">{stat.value}</p>
                   </div>
                 ))}
               </div>
 
               <section>
-                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-1">{detail.subject}</h3>
-                <div className="space-y-0 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100">
+                <h3 className="text-[10px] font-black text-gray-400 dark:text-foreground/50 uppercase tracking-widest mb-4 px-1">{detail.subject}</h3>
+                <div className="space-y-0 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-white/10">
                   {detail.emails.map((e) => (
                     <div key={e.id} className="relative pl-12 pb-6 group">
-                      <div className={`absolute left-0 top-1 w-[35px] h-[35px] rounded-full border-4 border-[#faf9f7] flex items-center justify-center z-10 ${e.opened ? 'bg-green-500' : 'bg-gray-300'}`}>
+                      <div className={`absolute left-0 top-1 w-[35px] h-[35px] rounded-full border-4 border-[#faf9f7] dark:border-background flex items-center justify-center z-10 ${e.opened ? 'bg-green-500' : 'bg-gray-300'}`}>
                         {e.opened ? <Eye className="h-3.5 w-3.5 text-white" /> : <Clock className="h-3.5 w-3.5 text-white" />}
                       </div>
-                      <div className="flex items-center justify-between gap-3 group-hover:bg-white/40 p-2 -m-2 rounded-xl transition-colors">
+                      <div className="flex items-center justify-between gap-3 group-hover:bg-white/40 dark:group-hover:bg-white/5 p-2 -m-2 rounded-xl transition-colors">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-900">{e.recipient_email}</span>
-                          <span className="text-[10px] text-gray-400 mt-0.5">
+                          <span className="text-sm font-bold text-gray-900 dark:text-foreground">{e.recipient_email}</span>
+                          <span className="text-[10px] text-gray-400 dark:text-foreground/50 mt-0.5">
                             {new Date(e.sent_at).toLocaleString('pt-BR')}
                             {e.opened && e.opened_at && ` • aberto em ${new Date(e.opened_at).toLocaleString('pt-BR')}`}
                           </span>
                         </div>
-                        <Badge variant="secondary" className={`text-[10px] ${e.opened ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-500'}`}>
+                        <Badge variant="secondary" className={`text-[10px] ${e.opened ? 'bg-green-50 dark:bg-green-500/15 text-green-600 dark:text-green-400' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-muted-foreground'}`}>
                           {e.opened ? 'Aberto' : 'Não aberto'}
                         </Badge>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50"
+                          className="h-8 w-8 rounded-full text-gray-300 dark:text-white/35 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50"
                           onClick={async (ev) => {
                             ev.stopPropagation();
                             await deleteEmails([e.id]);
@@ -1096,12 +1096,12 @@ const CleanEmailMarketing: React.FC = () => {
                   {loadingSentEmails ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-16">
-                        <Loader2 className="h-6 w-6 animate-spin text-gray-300 mx-auto" />
+                        <Loader2 className="h-6 w-6 animate-spin text-gray-300 dark:text-white/35 mx-auto" />
                       </TableCell>
                     </TableRow>
                   ) : campaignGroups.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-16 text-sm text-gray-400 italic">
+                      <TableCell colSpan={6} className="text-center py-16 text-sm text-gray-400 dark:text-foreground/50 italic">
                         Nenhuma campanha enviada ainda
                       </TableCell>
                     </TableRow>
@@ -1111,33 +1111,33 @@ const CleanEmailMarketing: React.FC = () => {
                     return (
                       <TableRow
                         key={g.key}
-                        className="cursor-pointer hover:bg-gray-50/50 transition-colors"
+                        className="cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors"
                         onClick={() => setCampaignDetail(g.key)}
                       >
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-gray-900">{g.subject}</span>
-                            <span className="text-[10px] text-gray-400">{new Date(g.emails[0]?.sent_at).toLocaleString('pt-BR')}</span>
+                            <span className="font-medium text-gray-900 dark:text-foreground">{g.subject}</span>
+                            <span className="text-[10px] text-gray-400 dark:text-foreground/50">{new Date(g.emails[0]?.sent_at).toLocaleString('pt-BR')}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5 text-gray-400" />
+                            <Users className="h-3.5 w-3.5 text-gray-400 dark:text-foreground/50" />
                             <span className="text-sm font-medium">{g.emails.length}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
-                            <Eye className="h-3.5 w-3.5 text-gray-400" />
+                            <Eye className="h-3.5 w-3.5 text-gray-400 dark:text-foreground/50" />
                             <span className="text-sm font-medium">{opened}</span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className="text-[10px] bg-green-50 text-green-600">Enviado</Badge>
+                          <Badge variant="secondary" className="text-[10px] bg-green-50 dark:bg-green-500/15 text-green-600 dark:text-green-400">Enviado</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-col items-end gap-1">
-                            <span className="text-sm font-bold text-[#374DA4]">{rate}%</span>
+                            <span className="text-sm font-bold text-primary">{rate}%</span>
                             <Progress value={rate} className="h-1 w-20" />
                           </div>
                         </TableCell>
@@ -1145,7 +1145,7 @@ const CleanEmailMarketing: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50"
+                            className="h-8 w-8 rounded-full text-gray-300 dark:text-white/35 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50"
                             onClick={(ev) => {
                               ev.stopPropagation();
                               if (confirm(`Apagar a campanha "${g.subject}" e seus ${g.emails.length} registro(s)?`)) {
@@ -1169,13 +1169,13 @@ const CleanEmailMarketing: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-[#faf9f7]">
+    <div className="min-h-full bg-[#faf9f7] dark:bg-background">
       {/* Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="sm:max-w-md text-center">
           <div className="py-6">
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <PartyPopper className="h-10 w-10 text-green-600 dark:text-green-400" />
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <PartyPopper className="h-10 w-10 text-green-600 dark:text-green-400 dark:text-green-400" />
             </div>
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-center">
@@ -1202,9 +1202,9 @@ const CleanEmailMarketing: React.FC = () => {
       </Dialog>
 
       {/* Top bar - just settings icon */}
-      <div className="sticky top-0 z-10 bg-[#faf9f7]">
+      <div className="sticky top-0 z-10 bg-[#faf9f7] dark:bg-background">
         <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Button variant="ghost" size="sm" className="rounded-full hover:bg-white/60" onClick={() => setView('list')}>
+          <Button variant="ghost" size="sm" className="rounded-full hover:bg-white/60 dark:hover:bg-white/5" onClick={() => setView('list')}>
             <ChevronLeft className="h-4 w-4 mr-2" /> Campanhas
           </Button>
           <Popover>
@@ -1223,7 +1223,7 @@ const CleanEmailMarketing: React.FC = () => {
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     isConnected ? 'bg-green-500/10' : 'bg-red-500/10'
                   }`}>
-                    <Mail className={`h-5 w-5 ${isConnected ? 'text-green-600' : 'text-red-500'}`} />
+                    <Mail className={`h-5 w-5 ${isConnected ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`} />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">
@@ -1342,7 +1342,7 @@ const CleanEmailMarketing: React.FC = () => {
               Fechar
             </Button>
             <Button 
-              className="bg-[#374DA4] hover:bg-[#2500B8] text-white"
+              className="bg-primary hover:bg-[#2500B8] text-white dark:hover:bg-primary/80"
               onClick={() => {
                 selectTemplate(previewTemplate);
                 setPreviewTemplate(null);

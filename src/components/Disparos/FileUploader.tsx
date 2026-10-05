@@ -97,42 +97,42 @@ export default function FileUploader({ onFileUrl, accept, type, disabled, curren
         <button
           onClick={() => inputRef.current?.click()}
           disabled={disabled || isUploading}
-          className="w-full flex flex-col items-center gap-2 py-8 border-2 border-dashed border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50/50 transition-all disabled:opacity-50"
+          className="w-full flex flex-col items-center gap-2 py-8 border-2 border-dashed border-gray-200 dark:border-white/15 rounded-xl hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-all disabled:opacity-50"
         >
           {isUploading ? (
             <>
-              <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
-              <span className="text-sm text-gray-500">Enviando {fileName}...</span>
+              <Loader2 className="h-8 w-8 text-gray-400 dark:text-foreground/50 animate-spin" />
+              <span className="text-sm text-gray-500 dark:text-muted-foreground">Enviando {fileName}...</span>
             </>
           ) : (
             <>
-              <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-100">
-                <Upload className="h-5 w-5 text-gray-500" />
+              <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/10">
+                <Upload className="h-5 w-5 text-gray-500 dark:text-muted-foreground" />
               </div>
               <div className="text-center">
                 <span className="text-sm font-medium" style={{ color: OMNI_COLOR }}>
                   Clique para enviar {config.label.toLowerCase()}
                 </span>
-                <p className="text-xs text-gray-400 mt-0.5">Máximo 20MB</p>
+                <p className="text-xs text-gray-400 dark:text-foreground/50 mt-0.5">Máximo 20MB</p>
               </div>
             </>
           )}
         </button>
       ) : (
-        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/5 rounded-xl">
           {previewUrl && type === 'image' ? (
             <img src={previewUrl} alt="preview" className="h-14 w-14 rounded-lg object-cover" />
           ) : (
-            <div className="h-14 w-14 rounded-lg flex items-center justify-center bg-gray-200">
-              <Icon className="h-6 w-6 text-gray-500" />
+            <div className="h-14 w-14 rounded-lg flex items-center justify-center bg-gray-200 dark:bg-white/15">
+              <Icon className="h-6 w-6 text-gray-500 dark:text-muted-foreground" />
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-700 truncate">{fileName || 'Arquivo carregado'}</p>
-            <p className="text-xs text-green-600">✓ Upload concluído</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-foreground/80 truncate">{fileName || 'Arquivo carregado'}</p>
+            <p className="text-xs text-green-600 dark:text-green-400">✓ Upload concluído</p>
           </div>
           {!disabled && (
-            <button onClick={clearFile} className="text-gray-400 hover:text-red-500 p-1">
+            <button onClick={clearFile} className="text-gray-400 dark:text-foreground/50 hover:text-red-500 dark:hover:text-red-400 p-1">
               <X className="h-4 w-4" />
             </button>
           )}

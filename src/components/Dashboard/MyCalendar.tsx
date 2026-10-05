@@ -199,12 +199,12 @@ const MyCalendar = ({ onNavigate }: MyCalendarProps) => {
   };
 
   return (
-    <div className="kommo-calendar flex flex-col min-h-full bg-[#faf9f7] dark:bg-background text-foreground transition-colors duration-300">
+    <div className="kommo-calendar flex flex-col min-h-full bg-[#faf9f7] dark:bg-background dark:bg-background text-foreground transition-colors duration-300">
       {/* Header matching /disparos pattern */}
-      <div className="px-4 md:px-6 pt-6 bg-[#faf9f7]">
+      <div className="px-4 md:px-6 pt-6 bg-[#faf9f7] dark:bg-background">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2 border-b border-border/40">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#374DA4]">Agenda</h1>
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-primary">Agenda</h1>
             <p className="text-xs text-muted-foreground">
               Gerencie seus compromissos e reuniões
             </p>
@@ -212,14 +212,14 @@ const MyCalendar = ({ onNavigate }: MyCalendarProps) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowIntegrationsModal(true)}
-              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-white/60 text-[12px] font-semibold text-foreground hover:bg-white transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-white/60 dark:bg-white/5 text-[12px] font-semibold text-foreground hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm"
             >
               <Plug className="h-4 w-4" />
               Integrações
             </button>
             <Button
               onClick={() => setShowTypeSelector(true)}
-              className="rounded-full bg-[#374DA4] hover:bg-[#2e418a] text-white shadow-lg shadow-[#374DA4]/20"
+              className="rounded-full bg-primary hover:bg-[#2e418a] dark:hover:bg-primary/80 text-white shadow-lg shadow-[#374DA4]/20"
             >
               <Plus className="h-4 w-4 mr-2" />
               Novo Evento
@@ -229,17 +229,17 @@ const MyCalendar = ({ onNavigate }: MyCalendarProps) => {
       </div>
 
       {/* Top toolbar - Simplified view switcher */}
-      <div className="flex items-center gap-2 px-3 md:px-6 h-14 bg-[#faf9f7]">
+      <div className="flex items-center gap-2 px-3 md:px-6 h-14 bg-[#faf9f7] dark:bg-background">
         <div className="flex items-center gap-1 bg-[#ecebe4] dark:bg-white/5 rounded-full p-1">
           <button
             onClick={() => switchView('listWeek')}
-            className={`p-2 rounded-full transition-all ${currentView === 'listWeek' ? 'bg-white text-[#374DA4] shadow-sm' : 'text-muted-foreground'}`}
+            className={`p-2 rounded-full transition-all ${currentView === 'listWeek' ? 'bg-white dark:bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}
           >
             <List className="h-4 w-4" />
           </button>
           <button
             onClick={() => switchView('dayGridMonth')}
-            className={`p-2 rounded-full transition-all ${currentView === 'dayGridMonth' ? 'bg-white text-[#374DA4] shadow-sm' : 'text-muted-foreground'}`}
+            className={`p-2 rounded-full transition-all ${currentView === 'dayGridMonth' ? 'bg-white dark:bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
@@ -249,7 +249,7 @@ const MyCalendar = ({ onNavigate }: MyCalendarProps) => {
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => navigate('/dashboard/agenda-aberta')}
-            className="inline-flex items-center gap-1.5 h-8 px-4 rounded-full bg-white/60 text-[11px] font-semibold text-foreground hover:bg-white transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 h-8 px-4 rounded-full bg-white/60 dark:bg-white/5 text-[11px] font-semibold text-foreground hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm"
           >
             <Link2 className="h-3.5 w-3.5" />
             LINKS
@@ -257,7 +257,7 @@ const MyCalendar = ({ onNavigate }: MyCalendarProps) => {
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-2 rounded-full hover:bg-white/80 text-muted-foreground transition-all" aria-label="Mais">
+              <button className="p-2 rounded-full hover:bg-white/80 dark:hover:bg-white/10 text-muted-foreground transition-all" aria-label="Mais">
                 <MoreHorizontal className="h-5 w-5" />
               </button>
             </DropdownMenuTrigger>
@@ -278,7 +278,7 @@ const MyCalendar = ({ onNavigate }: MyCalendarProps) => {
       </div>
 
       {/* Date navigation strip */}
-      <div className="flex items-center h-10 bg-white/30 dark:bg-white/5 px-3 mx-3 md:mx-6 my-1 rounded-xl backdrop-blur-sm border border-border/30">
+      <div className="flex items-center h-10 bg-white/30 dark:bg-white/5 dark:bg-white/5 px-3 mx-3 md:mx-6 my-1 rounded-xl backdrop-blur-sm border border-border/30">
         <button
           onClick={() => calendarRef.current?.getApi()?.prev()}
           className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-all hover:scale-110"
@@ -298,7 +298,7 @@ const MyCalendar = ({ onNavigate }: MyCalendarProps) => {
 
       {/* Calendar area */}
       <div className={`flex-1 px-3 md:px-5 pb-3 min-h-0 ${currentView.startsWith('timeGrid') ? 'overflow-hidden flex' : 'overflow-auto'}`}>
-        <div className={`calendar-container-v2 kommo-fc bg-white dark:bg-black rounded-3xl border border-border/40 overflow-hidden p-2 md:p-3 shadow-sm ${currentView.startsWith('timeGrid') ? 'flex-1 h-full min-h-0 flex flex-col' : ''}`}>
+        <div className={`calendar-container-v2 kommo-fc bg-white dark:bg-card dark:bg-black rounded-3xl border border-border/40 overflow-hidden p-2 md:p-3 shadow-sm ${currentView.startsWith('timeGrid') ? 'flex-1 h-full min-h-0 flex flex-col' : ''}`}>
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
