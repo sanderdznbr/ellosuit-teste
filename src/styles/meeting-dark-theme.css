@@ -1,0 +1,97 @@
+/* Fundo escuro APENAS em páginas de reunião no modo escuro */
+
+[data-meeting-page]:not([data-meeting-theme="light"]),
+body:has([data-meeting-page]:not([data-meeting-theme="light"])) {
+  background-color: #101010 !important;
+}
+
+/* Garantir que LiveKit nunca mostre fundo branco no modo escuro */
+[data-meeting-page]:not([data-meeting-theme="light"]) .lk-video-conference,
+[data-meeting-page]:not([data-meeting-theme="light"]) .lk-room-container,
+[data-meeting-page]:not([data-meeting-theme="light"]) [class*="livekit"],
+[data-meeting-page]:not([data-meeting-theme="light"]) [class*="LiveKit"] {
+  background-color: #101010 !important;
+}
+
+/* Modo claro: superfícies do novo padrão Claude */
+[data-meeting-page][data-meeting-theme="light"],
+body:has([data-meeting-page][data-meeting-theme="light"]) {
+  background-color: #faf9f7 !important;
+}
+
+[data-meeting-page][data-meeting-theme="light"] .lk-video-conference,
+[data-meeting-page][data-meeting-theme="light"] .lk-room-container,
+[data-meeting-page][data-meeting-theme="light"] [class*="livekit"],
+[data-meeting-page][data-meeting-theme="light"] [class*="LiveKit"] {
+  background-color: #faf9f7 !important;
+}
+
+/* ============================================================
+   MODO CLARO — neutraliza cores escuras fixas dentro da reunião
+   ============================================================ */
+
+/* Superfícies com cor escura fixa (inline style ou classe arbitrária) */
+[data-meeting-page][data-meeting-theme="light"] [style*="#1a1a1a"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#191919"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#181818"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#161616"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#151515"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#141414"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#121212"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#111"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#0f0f0f"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#0a0a0a"],
+[data-meeting-page][data-meeting-theme="light"] [style*="#090909"],
+[data-meeting-page][data-meeting-theme="light"] .bg-\[\#1a1a1a\],
+[data-meeting-page][data-meeting-theme="light"] .bg-\[\#161616\],
+[data-meeting-page][data-meeting-theme="light"] .bg-\[\#121212\],
+[data-meeting-page][data-meeting-theme="light"] .bg-\[\#0f0f0f\],
+[data-meeting-page][data-meeting-theme="light"] .bg-\[\#101010\] {
+  background-color: #ffffff !important;
+  color: #1c1b1a;
+}
+
+/* Bordas escuras fixas */
+[data-meeting-page][data-meeting-theme="light"] .border-\[\#2a2a2a\],
+[data-meeting-page][data-meeting-theme="light"] .border-\[\#252525\],
+[data-meeting-page][data-meeting-theme="light"] .border-\[\#1f1f1f\],
+[data-meeting-page][data-meeting-theme="light"] .border-\[\#333\],
+[data-meeting-page][data-meeting-theme="light"] [class*="border-white/"] {
+  border-color: #e8e5e0 !important;
+}
+
+/* Botões / chips translúcidos pretos */
+[data-meeting-page][data-meeting-theme="light"] [class*="bg-black/"] {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  color: #1c1b1a !important;
+}
+[data-meeting-page][data-meeting-theme="light"] [class*="hover\:bg-black/"]:hover {
+  background-color: #ffffff !important;
+}
+
+/* Texto branco sobre superfícies agora claras */
+[data-meeting-page][data-meeting-theme="light"] .text-white {
+  color: #1c1b1a !important;
+}
+[data-meeting-page][data-meeting-theme="light"] [class*="text-white/"] {
+  color: #6b6862 !important;
+}
+[data-meeting-page][data-meeting-theme="light"] [class*="text-gray-3"],
+[data-meeting-page][data-meeting-theme="light"] [class*="text-gray-4"],
+[data-meeting-page][data-meeting-theme="light"] [class*="text-neutral-4"] {
+  color: #6b6862 !important;
+}
+
+/* Tiles de vídeo: mantêm fundo escuro (o vídeo precisa), mas com moldura clara */
+[data-meeting-page][data-meeting-theme="light"] video {
+  background-color: #111 !important;
+}
+
+/* Overlay do nome do participante sobre o vídeo permanece legível */
+[data-meeting-page][data-meeting-theme="light"] .bg-gradient-to-t.from-black\/80 {
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent) !important;
+}
+[data-meeting-page][data-meeting-theme="light"] .bg-gradient-to-t.from-black\/80 .text-white,
+[data-meeting-page][data-meeting-theme="light"] .bg-gradient-to-t.from-black\/80 [class*="text-white"] {
+  color: #ffffff !important;
+}

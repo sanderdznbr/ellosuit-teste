@@ -1,0 +1,1 @@
+DELETE FROM public.ycloud_messages WHERE message_type = 'audio' AND status = 'failed';

@@ -1,0 +1,19 @@
+{
+  "name": "baileys-server",
+  "version": "4.6.0",
+  "description": "WhatsApp Baileys Server for Lovable CRM - Proactive Metadata Sync",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.17",
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

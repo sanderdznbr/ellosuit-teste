@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://ellosuit.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://ellosuit.app/auth</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://ellosuit.app/register</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://ellosuit.app/forgot-password</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://ellosuit.app/plans</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://ellosuit.app/docs-apicrm</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://ellosuit.app/docs/conectar-gmail</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://ellosuit.app/docs/enviar-email</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://ellosuit.app/team</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://ellosuit.app/privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://ellosuit.app/terms</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+</urlset>

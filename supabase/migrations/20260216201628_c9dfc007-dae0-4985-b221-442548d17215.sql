@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS notify_on_whatsapp_message ON public.whatsapp_messages;

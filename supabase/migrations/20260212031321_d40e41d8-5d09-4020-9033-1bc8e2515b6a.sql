@@ -1,0 +1,1 @@
+UPDATE public.company_users SET role = 'adminmaster' WHERE user_id = 'c63ba931-0c34-4461-ae8d-2908aed7dd20' AND company_id = '60008c43-e536-482d-a090-91904de57534';

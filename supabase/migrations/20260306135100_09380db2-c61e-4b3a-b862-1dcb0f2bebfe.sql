@@ -1,0 +1,1 @@
+UPDATE whatsapp_sessions SET baileys_server_url = 'https://budapest-provisions-passing-firefox.trycloudflare.com' WHERE baileys_server_url LIKE '%trycloudflare.com%' OR baileys_server_url LIKE '%voltage-directive%';

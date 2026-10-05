@@ -1,0 +1,1 @@
+UPDATE whatsapp_sessions SET baileys_server_url = 'https://voltage-directive-pursuit-gas.trycloudflare.com' WHERE baileys_server_url = 'https://mozilla-meter-isolated-stored.trycloudflare.com';

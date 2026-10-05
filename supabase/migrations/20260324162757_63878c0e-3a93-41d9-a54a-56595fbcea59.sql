@@ -1,0 +1,1 @@
+ALTER TABLE ycloud_conversations ADD COLUMN IF NOT EXISTS reschedule_event_id uuid REFERENCES calendar_events(id) ON DELETE SET NULL;

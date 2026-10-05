@@ -1,0 +1,1 @@
+UPDATE public.whatsapp_conversations SET human_takeover=false, human_takeover_reason=null, human_takeover_at=null WHERE id='68ed4e41-1e37-4daf-b0c1-90019c0817b7';

@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trigger_cleanup_old_sessions ON public.whatsapp_sessions;

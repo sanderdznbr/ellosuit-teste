@@ -1,0 +1,1 @@
+UPDATE public.whatsapp_conversations SET status='open' WHERE id='e7591d87-8ac8-4628-936c-42510c429548';

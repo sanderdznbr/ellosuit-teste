@@ -1,0 +1,1 @@
+ALTER TABLE ycloud_conversations ADD COLUMN IF NOT EXISTS ai_thinking_since timestamptz DEFAULT NULL;

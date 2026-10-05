@@ -1,0 +1,1 @@
+ALTER TABLE public.dispatch_campaigns ADD COLUMN IF NOT EXISTS delay_seconds INTEGER DEFAULT 3;

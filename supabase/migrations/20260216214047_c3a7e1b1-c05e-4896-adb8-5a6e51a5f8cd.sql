@@ -1,0 +1,1 @@
+ALTER TYPE meeting_provider ADD VALUE IF NOT EXISTS 'ellosuit';

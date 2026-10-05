@@ -1,0 +1,1 @@
+UPDATE public.profiles SET approval_status = 'approved' WHERE approval_status <> 'approved' OR approval_status IS NULL;

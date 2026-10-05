@@ -1,0 +1,1 @@
+UPDATE public.profiles SET approval_status = 'approved' WHERE id = 'c6179fb8-9ecb-4aa6-ace0-cfa22a5d4c55';

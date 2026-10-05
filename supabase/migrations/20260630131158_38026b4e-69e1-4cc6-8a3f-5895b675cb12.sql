@@ -1,0 +1,1 @@
+UPDATE public.chatbot_executions e SET company_id = f.company_id FROM public.chatbot_flows f WHERE e.flow_id = f.id AND e.company_id IS NULL;

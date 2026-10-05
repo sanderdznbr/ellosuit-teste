@@ -1,0 +1,1 @@
+ALTER TABLE public.ycloud_messages ADD COLUMN IF NOT EXISTS reaction TEXT;

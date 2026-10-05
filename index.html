@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <link rel="icon" type="image/png" href="/favicon.png">
+     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+     <link rel="preload" href="/fonts/SFPRODISPLAYMEDIUM.OTF" as="font" type="font/otf" crossorigin>
+     <link rel="preconnect" href="https://storage.googleapis.com">
+     <link rel="preconnect" href="https://cdn.onesignal.com">
+     
+     <title>Ellosuit — CRM com WhatsApp e Gestão para Empresários</title>
+    <meta name="description" content="Ellosuit reúne CRM com WhatsApp oficial, automações, agendamento inteligente e gestão completa em uma única plataforma para empresários.">
+    <meta name="keywords" content="Ellosuit App, CRM WhatsApp, automação de processos, gestão empresarial SaaS, agendamento de reuniões, software para empresários, CRM Paranaguá, automação comercial PR" />
+    <meta name="author" content="ELLOSUIT" />
+    <link rel="canonical" href="https://www.ellosuit.app" />
+    <meta name="robots" content="index, follow" />
+    
+    <meta name="theme-color" content="#3000E3" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.ellosuit.app/" />
+    <meta property="og:title" content="Ellosuit — CRM com WhatsApp e Gestão para Empresários">
+    <meta property="og:description" content="CRM com WhatsApp oficial, automações, agendamento e gestão completa em uma única plataforma.">
+    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/RoAoQPxf0ogyxnKM2ONwdAgxTwf1/social-images/social-1778394353276-ellos.webp">
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Ellosuit App" />
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://www.ellosuit.app/" />
+    <meta name="twitter:title" content="Ellosuit — CRM com WhatsApp e Gestão para Empresários">
+    <meta name="twitter:description" content="CRM com WhatsApp oficial, automações, agendamento e gestão completa em uma única plataforma.">
+    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/RoAoQPxf0ogyxnKM2ONwdAgxTwf1/social-images/social-1778394353276-ellos.webp">
+    <meta name="twitter:site" content="@ellosuit" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+    <script>
+      // Intercept Google OAuth callbacks meant for our own integrations
+      // (Google Calendar / Gmail) BEFORE the Supabase JS client loads.
+      // Otherwise supabase-js `detectSessionInUrl` sees the `?code=` param
+      // and tries to exchange it for a session, signing the user out and
+      // logging them in as the connected Google account.
+      //
+      // We only stash params that pass strict validation:
+      //   * `state` must be `<flow>.<nonce>` where flow is one of the
+      //     known values and nonce is a 16+ char url-safe token.
+      //   * A matching pending intent (with the same nonce) must exist
+      //     in sessionStorage and be < 10 minutes old.
+      //   * `code` must look like a Google auth code (url-safe chars,
+      //     bounded length) and no `error` from Google.
+      // Anything failing validation is discarded and the URL is cleaned,
+      // so a stray/forged `?code=` cannot trigger a session swap either.
+      (function () {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var state = params.get('state') || '';
+          var code = params.get('code');
+          var err = params.get('error');
+
+          var KNOWN_FLOWS = ['google_calendar_auth', 'gmail_auth'];
+          var stateMatch = /^([a-z_]+)\.([A-Za-z0-9_-]{16,128})$/.exec(state);
+          var flow = stateMatch ? stateMatch[1] : null;
+          var nonce = stateMatch ? stateMatch[2] : null;
+          var knownFlow = flow && KNOWN_FLOWS.indexOf(flow) !== -1;
+
+          var intent = null;
+          try {
+            var raw = sessionStorage.getItem('__ellosuit_oauth_intent__');
+            if (raw) intent = JSON.parse(raw);
+          } catch (_) { intent = null; }
+
+          var MAX_AGE_MS = 10 * 60 * 1000;
+          var intentValid = !!(
+            intent &&
+            knownFlow &&
+            intent.flow === flow &&
+            intent.nonce === nonce &&
+            typeof intent.createdAt === 'number' &&
+            (Date.now() - intent.createdAt) < MAX_AGE_MS
+          );
+
+          var codeValid = typeof code === 'string' &&
+            code.length >= 20 && code.length <= 2048 &&
+            /^[A-Za-z0-9/_\-.%]+$/.test(code);
+
+          if (knownFlow && intentValid && (codeValid || err)) {
+            sessionStorage.setItem(
+              '__ellosuit_oauth_pending__',
+              JSON.stringify({
+                code: codeValid ? code : null,
+                state: state,
+                flow: flow,
+                nonce: nonce,
+                userId: intent.userId || null,
+                error: err || null,
+                receivedAt: Date.now()
+              })
+            );
+          } else if (knownFlow || code || err) {
+            // Wrong/expired/forged callback — drop it and log.
+            console.warn('OAuth callback rejected', {
+              knownFlow: knownFlow,
+              intentValid: intentValid,
+              codeValid: codeValid,
+              hasError: !!err
+            });
+          }
+
+          // Always strip OAuth params from the URL so supabase-js cannot
+          // pick them up, regardless of whether they were accepted.
+          if (code || err || state) {
+            params.delete('code');
+            params.delete('state');
+            params.delete('error');
+            params.delete('scope');
+            params.delete('authuser');
+            params.delete('prompt');
+            params.delete('hd');
+            var qs = params.toString();
+            var newUrl = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+            window.history.replaceState({}, document.title, newUrl);
+          }
+        } catch (e) {
+          console.warn('OAuth intercept failed', e);
+        }
+      })();
+    </script>
+    
+    <!-- Custom CSS for safe area -->
+    <style>
+      html, body {
+        background-color: #3000E3;
+        margin: 0;
+        padding: 0;
+        transition: background-color 0.3s ease;
+      }
+      
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      
+      #root {
+        background-color: hsl(0 0% 100%);
+        min-height: 100vh;
+      }
+    </style>
+ </head>
+ 
+   <body>
+     <div id="root"></div>
+     <footer id="static-policy-footer" style="text-align:center;padding:24px;font-family:sans-serif;font-size:14px;color:#666;background:#fff;">
+       <a href="https://www.ellosuit.online/privacy" style="color:#3000E3;text-decoration:underline;margin-right:16px;">Política de Privacidade</a>
+       <a href="https://www.ellosuit.online/terms" style="color:#3000E3;text-decoration:underline;">Termos de Serviço</a>
+     </footer>
+     <script type="module" src="/src/main.tsx"></script>
+     <script type="application/ld+json">
+     {
+       "@context": "https://schema.org",
+       "@type": "SoftwareApplication",
+       "name": "Ellosuit App",
+       "description": "Plataforma SaaS completa para gestão empresarial, automação de WhatsApp e CRM inteligente.",
+       "url": "https://www.ellosuit.app",
+       "applicationCategory": "BusinessApplication",
+       "operatingSystem": "Web Browser, Mobile",
+       "address": {
+         "@type": "PostalAddress",
+         "addressLocality": "Paranaguá",
+         "addressRegion": "PR",
+         "addressCountry": "BR"
+       },
+       "offers": {
+         "@type": "Offer",
+         "price": "97.00",
+         "priceCurrency": "BRL",
+         "category": "Business Software"
+       },
+       "author": {
+         "@type": "Organization",
+         "name": "Ellosuit",
+         "url": "https://www.ellosuit.app"
+       }
+     }
+     </script>
+     <script type="application/ld+json">
+     {
+       "@context": "https://schema.org",
+       "@type": "Organization",
+       "name": "Ellosuit",
+       "url": "https://www.ellosuit.app",
+       "logo": "https://www.ellosuit.app/favicon.png",
+       "sameAs": ["https://twitter.com/ellosuit"]
+     }
+     </script>
+     <script type="application/ld+json">
+     {
+       "@context": "https://schema.org",
+       "@type": "WebSite",
+       "name": "Ellosuit",
+       "url": "https://www.ellosuit.app",
+       "inLanguage": "pt-BR"
+     }
+     </script>
+     <script>
+       // Hide static footer once React app mounts
+       var observer = new MutationObserver(function() {
+         var r = document.getElementById('root');
+         if (r && r.children.length > 0) {
+           var f = document.getElementById('static-policy-footer');
+           if (f) f.style.display = 'none';
+           observer.disconnect();
+         }
+       });
+       observer.observe(document.getElementById('root'), { childList: true });
+     </script>
+   </body>
+</html>

@@ -1,0 +1,1 @@
+ALTER TABLE public.ycloud_conversations ADD COLUMN IF NOT EXISTS status text DEFAULT 'open';

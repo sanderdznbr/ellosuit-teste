@@ -1,0 +1,22 @@
+# Ellosuit
+
+> Plataforma SaaS brasileira que reúne CRM com WhatsApp oficial, automação de processos, agendamento inteligente e gestão completa para empresários e times comerciais.
+
+Ellosuit integra módulos Omni (CRM/WhatsApp), Flow (automações e reuniões), Track (rastreio de documentos, links e vídeos) e Suite (gestão geral) em um único painel.
+
+## Pages
+
+- [Home](/): Visão geral da plataforma, recursos e provas sociais.
+- [Planos](/plans): Comparação de planos, preços e período de teste de 7 dias.
+- [Cadastro](/register): Criar conta gratuita.
+- [Login](/auth): Acesso à conta.
+- [Equipe](/team): Time por trás do Ellosuit.
+- [Documentação API CRM](/docs-apicrm): Referência da API para integração com o CRM.
+- [Conectar Gmail](/docs/conectar-gmail): Guia para conectar contas Google.
+- [Enviar e-mails](/docs/enviar-email): Como disparar e-mails pelo Ellosuit.
+- [Política de Privacidade](/privacy): Como tratamos dados pessoais.
+- [Termos de Serviço](/terms): Termos de uso da plataforma.
+
+## Optional
+
+- [Recuperar senha](/forgot-password): Fluxo de redefinição de senha.

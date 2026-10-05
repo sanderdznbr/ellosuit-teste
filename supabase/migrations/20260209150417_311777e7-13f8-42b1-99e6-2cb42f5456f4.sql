@@ -1,0 +1,16 @@
+
+INSERT INTO public.calendar_events (company_id, created_by, title, description, start_date, end_date, event_type, color, status) VALUES
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Reunião com Cliente Premium', 'Alinhamento de projeto e escopo', '2026-02-10 09:00:00+00', '2026-02-10 10:00:00+00', 'meeting', '#3600FF', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Workshop de Marketing Digital', 'Treinamento para equipe de vendas', '2026-02-11 14:00:00+00', '2026-02-11 16:00:00+00', 'meeting', '#00E371', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Call com Fornecedor', 'Negociação de contrato anual', '2026-02-12 11:00:00+00', '2026-02-12 11:30:00+00', 'meeting', '#FF4500', 'pending'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Apresentação de Resultados Q1', 'Review trimestral', '2026-02-14 10:00:00+00', '2026-02-14 12:00:00+00', 'meeting', '#3000E3', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Almoço com Parceiros', 'Networking e alinhamento', '2026-02-17 12:00:00+00', '2026-02-17 13:30:00+00', 'appointment', '#8B5CF6', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Sprint Planning', 'Planejamento da sprint 12', '2026-02-18 09:00:00+00', '2026-02-18 10:00:00+00', 'meeting', '#007DE3', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Demo para Investidor', 'Apresentação do produto', '2026-02-19 15:00:00+00', '2026-02-19 16:00:00+00', 'meeting', '#FF4500', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Entrevista Candidato Dev', 'Entrevista técnica', '2026-02-20 14:00:00+00', '2026-02-20 15:00:00+00', 'appointment', '#00E371', 'pending'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Deadline Proposta Comercial', 'Envio de proposta para Corp ABC', '2026-02-21 18:00:00+00', '2026-02-21 18:30:00+00', 'reminder', '#FF0000', 'pending'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Reunião de Retrospectiva', 'Retro sprint 11', '2026-02-24 16:00:00+00', '2026-02-24 17:00:00+00', 'meeting', '#007DE3', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Treinamento Onboarding', 'Onboarding novo colaborador', '2026-02-25 09:00:00+00', '2026-02-25 11:00:00+00', 'appointment', '#3000E3', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Happy Hour Equipe', 'Confraternização mensal', '2026-02-27 18:00:00+00', '2026-02-27 20:00:00+00', 'meeting', '#8B5CF6', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Review de Métricas', 'Análise de KPIs mensais', '2026-03-03 10:00:00+00', '2026-03-03 11:00:00+00', 'meeting', '#00E371', 'confirmed'),
+('92c0552b-2985-4ff7-8cf5-78298f564a72', '332371f9-6010-4ec0-b576-da80bad552dd', 'Planejamento Março', 'Definição de metas e OKRs', '2026-03-05 09:00:00+00', '2026-03-05 11:00:00+00', 'meeting', '#3600FF', 'pending');

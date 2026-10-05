@@ -1,0 +1,3 @@
+UPDATE public.whatsapp_sessions
+SET baileys_server_url = 'https://baileys-server-novo-production.up.railway.app'
+WHERE baileys_server_url IS DISTINCT FROM 'https://baileys-server-novo-production.up.railway.app';

@@ -1,0 +1,1 @@
+UPDATE ycloud_conversations SET profile_picture = NULL WHERE profile_picture IS NOT NULL AND profile_picture LIKE '%/avatars/%';

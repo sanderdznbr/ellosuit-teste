@@ -1,0 +1,1 @@
+ALTER TABLE public.workflow_cards ADD COLUMN IF NOT EXISTS cover_url TEXT, ADD COLUMN IF NOT EXISTS checklist JSONB DEFAULT '[]'::jsonb, ADD COLUMN IF NOT EXISTS automation_buttons JSONB DEFAULT '[]'::jsonb;

@@ -1,0 +1,82 @@
+name: WhatsApp Reconnect E2E
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/whatsapp-health-check/**'
+      - 'supabase/functions/whatsapp-api/**'
+      - 'supabase/functions/whatsapp-webhook/**'
+      - '.github/workflows/whatsapp-reconnect-e2e.yml'
+  workflow_dispatch:
+    inputs:
+      monitor_minutes:
+        description: 'How long to monitor the session (minutes)'
+        default: '15'
+
+concurrency:
+  group: whatsapp-reconnect-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reconnect-stability:
+    runs-on: ubuntu-latest
+    # CI default: 4min (fits fast PR feedback). Manual dispatch can push to 15min.
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SESSION_ID: ${{ secrets.E2E_WHATSAPP_SESSION_ID }}
+      MONITOR_MINUTES: ${{ github.event.inputs.monitor_minutes || '4' }}
+      POLL_SECONDS: '30'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if secrets are missing (forks)
+        id: gate
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] || [ -z "$SESSION_ID" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::E2E secrets not configured — skipping (expected on forks)."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Deno
+        if: steps.gate.outputs.run == 'true'
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Run reconnect stability test
+        if: steps.gate.outputs.run == 'true'
+        id: run_test
+        run: |
+          mkdir -p test-artifacts
+          deno test -A --no-check \
+            supabase/functions/whatsapp-health-check/reconnect_stability_test.ts \
+            2>&1 | tee test-artifacts/reconnect_stability.log
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          exit "${PIPESTATUS[0]}"
+
+      - name: Collect session diagnostics on failure
+        if: failure() && steps.gate.outputs.run == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        run: |
+          mkdir -p test-artifacts
+          curl -sS \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            "$SUPABASE_URL/rest/v1/whatsapp_sessions?id=eq.$SESSION_ID&select=id,status,phone_number,last_seen_at,session_data,updated_at" \
+            > test-artifacts/session_state.json || true
+
+      - name: Upload test artifacts
+        if: failure() && steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: whatsapp-reconnect-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-artifacts/
+          retention-days: 14
+          if-no-files-found: warn

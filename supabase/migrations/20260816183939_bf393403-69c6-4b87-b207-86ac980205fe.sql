@@ -1,0 +1,1 @@
+ALTER TABLE public.dispatch_campaigns ADD COLUMN IF NOT EXISTS follow_ups jsonb NOT NULL DEFAULT '[]'::jsonb;

@@ -1,0 +1,126 @@
+project_id = "jwddiyuezqrpuakazvgg"
+
+[functions.realtime-transcription]
+verify_jwt = false
+
+[functions.crm-sales-ai]
+verify_jwt = false
+
+[functions.elevenlabs-scribe-token]
+verify_jwt = false
+
+[functions.whatsapp-api]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.track-email-open]
+verify_jwt = false
+
+[functions.document-tracking]
+verify_jwt = false
+
+[functions.pagarme-checkout]
+verify_jwt = false
+
+[functions.pagarme-webhook]
+verify_jwt = false
+
+[functions.pagarme-cancel]
+verify_jwt = false
+
+[functions.admin-impersonate]
+verify_jwt = false
+
+[functions.get-shared-content]
+verify_jwt = false
+
+[functions.track-email-link]
+verify_jwt = false
+
+[functions.whatsapp-public-api]
+verify_jwt = false
+
+[functions.tts-openai]
+verify_jwt = false
+
+[functions.form-capture]
+verify_jwt = false
+
+[functions.admin-notify]
+verify_jwt = false
+
+[functions.automation-webhook]
+verify_jwt = false
+
+[functions.send-proposal]
+verify_jwt = false
+
+[functions.ai-assistant]
+verify_jwt = false
+
+[functions.ai-agent-worker]
+verify_jwt = false
+
+[functions.elevenlabs-tts]
+verify_jwt = false
+
+[functions.elevenlabs-voice-clone]
+verify_jwt = false
+
+[functions.elevenlabs-stt]
+verify_jwt = false
+
+[functions.ellosuit-whatsapp-agent]
+verify_jwt = false
+
+[functions.chatbot-incoming]
+verify_jwt = false
+
+[functions.send-user-notification]
+verify_jwt = false
+
+[functions.whatsapp-health-check]
+verify_jwt = false
+
+[functions.send-system-email]
+verify_jwt = false
+
+[functions.beehive-checkout]
+verify_jwt = false
+
+[functions.beehive-webhook]
+verify_jwt = false
+
+[functions.handle-meeting-reschedule]
+verify_jwt = false
+
+[functions.generate-carousel]
+verify_jwt = false
+
+[functions.search-news]
+verify_jwt = false
+
+[functions.facebook-auth]
+verify_jwt = false
+
+[functions.higgsfield-generate]
+verify_jwt = false
+
+[functions.meta-whatsapp-webhook]
+verify_jwt = false
+
+[functions.meta-whatsapp-api]
+verify_jwt = false
+
+[functions.ycloud-api]
+verify_jwt = false
+
+[functions.ycloud-webhook]
+verify_jwt = false
+
+[functions.chatbot-builder-ai]
+verify_jwt = false
+
+

@@ -1,0 +1,19 @@
+{
+  "name": "baileys-server",
+  "version": "4.5.0",
+  "description": "WhatsApp Baileys Server for Lovable CRM - Full Sync + Stickers",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.5",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "pino": "^9.4.0",
+    "qrcode": "^1.5.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,28 @@
+.cube-loader {
+  display: grid;
+  grid-template-columns: repeat(2, 50px);
+  grid-template-rows: repeat(2, 50px);
+  gap: 30px;
+  perspective: 1000px;
+}
+
+.cube-loader .cube {
+  width: 60px;
+  height: 60px;
+  background-color: rgba(139, 92, 246, 0.6);
+  position: relative;
+  border-radius: 5px;
+  transform-style: preserve-3d;
+  animation: cube-grid-rotate 1.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+  will-change: transform;
+}
+
+.cube-loader .cube:nth-child(1) { animation-delay: 0s; }
+.cube-loader .cube:nth-child(2) { animation-delay: 0.2s; }
+.cube-loader .cube:nth-child(3) { animation-delay: 0.4s; }
+.cube-loader .cube:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes cube-grid-rotate {
+  0% { transform: rotateX(0deg) rotateY(0deg); }
+  100% { transform: rotateX(360deg) rotateY(360deg); }
+}

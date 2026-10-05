@@ -1,0 +1,1 @@
+DELETE FROM ycloud_sessions WHERE phone_number IS NULL;

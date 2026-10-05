@@ -1,0 +1,560 @@
+/* Zoom Meeting Layout */
+.zoom-meeting-layout-light {
+  @apply min-h-screen bg-background flex flex-col;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.zoom-meeting-header {
+  @apply flex items-center justify-between p-4 bg-white/90 backdrop-blur-sm border-b border-gray-200 z-10 shadow-sm flex-shrink-0;
+  height: 80px;
+}
+
+.zoom-meeting-logo {
+  @apply h-8 w-auto object-contain;
+}
+
+.zoom-meeting-main {
+  @apply flex-1 flex relative overflow-hidden;
+  min-height: calc(100vh - 80px);
+}
+
+.zoom-meeting-content {
+  @apply flex-1 flex flex-col relative bg-gradient-to-br from-slate-50 to-gray-100;
+  height: 100%;
+}
+
+/* Pre-Join Styles - Dark Theme */
+.zoom-prejoin-container {
+  @apply h-full flex items-center justify-center bg-gray-900 p-8;
+}
+
+.zoom-prejoin-card {
+  @apply bg-gray-800 border border-gray-700 rounded-2xl p-8 max-w-lg w-full shadow-2xl;
+}
+
+.zoom-prejoin-preview {
+  @apply relative bg-gray-700 rounded-xl overflow-hidden mb-6 aspect-video;
+}
+
+.zoom-prejoin-preview video {
+  @apply w-full h-full object-cover;
+}
+
+.zoom-prejoin-controls {
+  @apply flex items-center justify-center gap-4 mb-6;
+}
+
+.zoom-prejoin-button {
+  @apply w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200;
+}
+
+.zoom-prejoin-button.active {
+  @apply bg-white text-gray-900;
+}
+
+.zoom-prejoin-button.inactive {
+  @apply bg-red-500 text-white;
+}
+
+.zoom-prejoin-name {
+  @apply bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 rounded-lg px-4 py-3 mb-6;
+}
+
+.zoom-prejoin-actions {
+  @apply flex gap-3;
+}
+
+/* Pre-Join Styles - Light Theme (Modified to Dark) */
+.zoom-prejoin-container-light {
+  @apply min-h-screen flex items-center justify-center p-4;
+  background-color: #101010 !important;
+  overflow-y: auto;
+}
+
+.zoom-prejoin-card-light {
+  @apply border border-gray-700 rounded-2xl p-8 w-full shadow-xl;
+  background-color: #1a1a1a !important;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.zoom-prejoin-preview-light {
+  @apply relative rounded-xl overflow-hidden mb-6 border border-gray-700;
+  background-color: #2a2a2a !important;
+  width: 100%;
+  height: 280px;
+  max-height: 320px;
+  flex-shrink: 0;
+}
+
+.zoom-prejoin-preview-light video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.zoom-prejoin-preview-light video {
+  @apply w-full h-full object-cover;
+}
+
+.zoom-prejoin-button-light {
+  @apply w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 border;
+  background-color: #2a2a2a !important;
+  color: white !important;
+  border-color: #444 !important;
+}
+
+.zoom-prejoin-button-light.active-light {
+  @apply text-white;
+  background-color: #3600FF !important;
+  border-color: #3600FF !important;
+}
+
+.zoom-prejoin-button-light.inactive-light {
+  @apply text-white;
+  background-color: #EF4444 !important;
+  border-color: #EF4444 !important;
+}
+
+.zoom-prejoin-name-light {
+  @apply rounded-lg px-4 py-3 focus:ring-1;
+  background-color: #2a2a2a !important;
+  color: white !important;
+  border: 1px solid #444 !important;
+}
+
+.zoom-prejoin-name-light::placeholder {
+  color: #888 !important;
+}
+
+.zoom-prejoin-name-light:focus {
+  border-color: #3600FF !important;
+  ring-color: #3600FF !important;
+}
+
+.zoom-prejoin-actions {
+  @apply flex gap-3 mt-6;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 640px) {
+  .zoom-prejoin-card-light {
+    @apply p-4;
+    max-height: 90vh;
+  }
+  
+  .zoom-prejoin-preview-light {
+    height: 200px;
+    max-height: 240px;
+  }
+  
+  .zoom-prejoin-button-light {
+    @apply h-10 w-10;
+  }
+}
+
+/* Modern Participant Grid - Light Theme - Full Height */
+.zoom-participant-grid-container {
+  @apply flex-1 p-6 flex flex-col gap-6 overflow-hidden bg-background;
+  min-height: calc(100vh - 240px);
+  height: 100%;
+}
+
+.zoom-screenshare-area {
+  @apply flex-1 min-h-0 flex flex-col justify-center bg-background rounded-xl p-4 mb-4 border border-border;
+}
+
+.zoom-participant-grid {
+  @apply flex flex-wrap justify-center items-center gap-4 overflow-hidden;
+}
+
+/* Grid layouts - Responsive and Never Crop */
+.grid-1 {
+  @apply grid grid-cols-1 gap-4 h-full;
+}
+
+.grid-2 {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-4 h-full;
+}
+
+.grid-4 {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4 h-full;
+}
+
+.grid-many {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 h-full auto-rows-fr;
+}
+
+.grid-with-screenshare {
+  @apply flex flex-col gap-4 h-full;
+}
+
+/* Ensure videos never get cropped */
+.zoom-participant-grid > div,
+.zoom-participant-grid-container video {
+  @apply object-contain;
+}
+
+/* Scrollbar for camera carousel */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+.zoom-participant-tile {
+  @apply relative bg-white rounded-2xl overflow-hidden border-2 border-gray-200 hover:border-[#879CE0] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02];
+  aspect-ratio: 16/9; /* Enforce 16:9 ratio */
+}
+
+.zoom-participant-tile video {
+  @apply w-full h-full object-cover;
+}
+
+.zoom-participant-name {
+  @apply absolute bottom-3 left-3 bg-white/90 text-gray-800 text-sm px-3 py-1.5 rounded-lg backdrop-blur-sm font-medium shadow-sm;
+}
+
+.zoom-participant-controls {
+  @apply absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity;
+}
+
+.zoom-mute-indicator {
+  @apply absolute top-3 left-3 w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shadow-lg;
+}
+
+.zoom-speaking-indicator {
+  @apply absolute inset-0 border-4 border-green-400 rounded-2xl animate-pulse;
+}
+
+/* Modern Meeting Controls - Light Theme - Fixed Position */
+.meeting-controls {
+  @apply fixed bottom-0 left-0 right-0 z-20 p-6;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95), transparent);
+  backdrop-filter: blur(10px);
+  height: 120px;
+}
+
+.meeting-controls-container {
+  @apply flex items-center justify-between max-w-7xl mx-auto;
+}
+
+.meeting-controls-left,
+.meeting-controls-right {
+  @apply flex items-center gap-4;
+}
+
+.meeting-controls-center {
+  @apply flex items-center gap-4;
+}
+
+.control-button {
+  @apply w-12 h-12 rounded-full text-white border-2 transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl;
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+}
+
+.control-button:hover {
+  background-color: hsl(var(--primary) / 0.9);
+  border-color: hsl(var(--primary) / 0.9);
+}
+
+.control-button-muted {
+  @apply bg-red-500 hover:bg-red-600 text-white border-red-500;
+}
+
+.control-button-active {
+  background-color: hsl(var(--primary) / 0.8);
+  border-color: hsl(var(--primary) / 0.8);
+}
+
+.control-button-leave {
+  @apply bg-red-500 hover:bg-red-600 text-white border-red-500;
+}
+
+.recording-indicator {
+  @apply w-3 h-3 bg-green-500 rounded-full animate-pulse;
+}
+
+/* Meeting Sidebar - Fixed Right Side */
+.zoom-meeting-sidebar-container {
+  @apply fixed top-20 right-0 bottom-0 w-80 bg-background border-l border-border shadow-xl z-30 flex flex-col;
+}
+
+.zoom-meeting-sidebar {
+  @apply w-full h-full bg-background flex flex-col overflow-hidden;
+}
+
+.zoom-sidebar-buttons {
+  @apply flex border-b border-border bg-muted/50;
+}
+
+.sidebar-toggle-button {
+  @apply flex-1 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted border-none bg-transparent transition-colors flex items-center justify-center;
+}
+
+.sidebar-toggle-button.active {
+  @apply text-foreground bg-muted font-semibold;
+}
+
+.meeting-sidebar {
+  @apply flex-1 bg-background flex flex-col overflow-hidden;
+}
+
+.meeting-sidebar-header {
+  @apply p-4 border-b border-border bg-muted/20;
+}
+
+.meeting-sidebar-content {
+  @apply flex-1 overflow-hidden bg-background;
+}
+
+.participant-item {
+  @apply flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors;
+}
+
+.chat-message {
+  @apply py-2;
+}
+
+.chat-input {
+  @apply p-4 border-t border-border bg-muted/20;
+}
+
+/* Recording button styles */
+.control-button-recording {
+  background: hsl(var(--destructive)) !important;
+  animation: recording-pulse 2s infinite;
+}
+
+.control-button-recording:hover {
+  background: hsl(var(--destructive) / 0.9) !important;
+}
+
+.recording-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--muted-foreground));
+}
+
+.recording-indicator.recording-active {
+  background: hsl(var(--destructive));
+  animation: recording-pulse 2s infinite;
+}
+
+@keyframes recording-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Mobile Meeting Layout */
+.mobile-meeting-layout {
+  @apply w-full bg-gray-50 flex flex-col overflow-hidden;
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+.mobile-meeting-header {
+  @apply flex items-center justify-between p-3 bg-white border-b border-gray-200 z-10 shadow-sm;
+  height: 70px;
+}
+
+.mobile-video-area {
+  @apply flex-1 p-4 flex flex-col gap-4 overflow-hidden bg-gray-50;
+  padding-bottom: calc(90px + 1rem);
+}
+
+.mobile-screenshare {
+  @apply flex justify-center items-center mb-4 bg-white rounded-xl p-4 shadow-lg border border-gray-200;
+  min-height: 280px;
+}
+
+.mobile-participants-grid {
+  @apply grid gap-4 overflow-y-auto justify-items-center content-start p-2;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.mobile-participants-grid.with-screenshare {
+  @apply grid grid-cols-2 gap-3 overflow-y-auto justify-items-center;
+  height: auto;
+  max-height: 220px;
+}
+
+.mobile-participants-grid.full-screen {
+  @apply flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto justify-items-center content-start;
+}
+
+/* Mobile Controls - Updated for new design */
+.mobile-controls {
+  @apply fixed bottom-0 left-0 right-0 flex items-center justify-center bg-white border-t border-gray-200 shadow-lg z-20;
+  height: 90px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-control-btn {
+  @apply w-12 h-12 rounded-full bg-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200;
+}
+
+.mobile-control-btn.muted {
+  @apply bg-red-500 hover:bg-red-600;
+}
+
+.mobile-control-btn.active {
+  @apply bg-green-500 hover:bg-green-600;
+}
+
+.mobile-control-btn.leave {
+  @apply bg-red-500 hover:bg-red-600;
+}
+
+/* Floating Action Buttons */
+.mobile-floating-buttons {
+  @apply fixed right-4 flex flex-col gap-3 z-30;
+  bottom: calc(90px + 1rem + env(safe-area-inset-bottom));
+}
+
+.mobile-fab {
+  @apply w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center relative;
+}
+
+.mobile-fab.with-badge {
+  @apply bg-[#2F428D];
+}
+
+.fab-badge {
+  @apply absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold;
+}
+
+/* Mobile Modals */
+.mobile-modal-overlay {
+  @apply fixed inset-0 bg-black/50 z-40 flex items-end;
+}
+
+.mobile-modal {
+  @apply w-full bg-white rounded-t-2xl shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-300;
+  max-height: 80vh;
+}
+
+.mobile-modal.chat-modal,
+.mobile-modal.participants-modal {
+  @apply h-[80vh];
+}
+
+.modal-header {
+  @apply flex items-center justify-between p-4 border-b border-gray-200;
+}
+
+.modal-content {
+  @apply flex-1 overflow-y-auto;
+}
+
+.modal-footer {
+  @apply p-4 border-t border-gray-200;
+}
+
+.chat-message-mobile {
+  @apply py-2;
+}
+
+.participant-item-mobile {
+  @apply flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors;
+}
+
+@media (max-width: 768px) {
+  .mobile-participants-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-participants-grid {
+    grid-template-columns: 1fr;
+    gap: 2;
+  }
+  
+  .mobile-participants-grid.with-screenshare {
+    grid-template-columns: 1fr 1fr;
+    gap: 1;
+  }
+  
+  .zoom-prejoin-card {
+    @apply p-6 mx-4;
+  }
+  
+  .mobile-meeting-header {
+    @apply p-2;
+    height: 50px;
+  }
+  
+  .mobile-controls {
+    @apply gap-3 p-3;
+    height: 70px;
+  }
+  
+  .mobile-control-btn {
+    @apply w-10 h-10;
+  }
+  
+  .mobile-fab {
+    @apply w-12 h-12;
+  }
+  
+  .fab-badge {
+    @apply w-4 h-4 text-xs;
+  }
+}
+
+/* Ensure body and html take full height */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  height: 100dvh;
+  width: 100vw;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.zoom-participant-tile {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading States - Light Theme */
+.meeting-loading {
+  @apply flex items-center justify-center h-full bg-gray-50 text-gray-700;
+}
+
+.meeting-error {
+  @apply flex flex-col items-center justify-center h-full bg-gray-50 text-gray-700 p-8 text-center;
+}
+
+/* Connection Quality Indicators */
+.connection-excellent { @apply bg-green-500; }
+.connection-good { @apply bg-yellow-500; }
+.connection-poor { @apply bg-red-500; }

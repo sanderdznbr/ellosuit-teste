@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_conversations ADD COLUMN IF NOT EXISTS api_managed boolean DEFAULT false;

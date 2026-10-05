@@ -1,0 +1,88 @@
+/* Mobile Sidebar Animations */
+
+@media (max-width: 768px) {
+  /* Shadcn Sheet improvements for mobile sidebar */
+  [data-state="open"] > .fixed.inset-0 {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  [data-state="closed"] > .fixed.inset-0 {
+    animation: fadeOut 0.3s ease-out;
+  }
+
+  /* Sidebar slide animation */
+  [data-side="left"][data-state="open"] {
+    animation: slideInLeft 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  [data-side="left"][data-state="closed"] {
+    animation: slideOutLeft 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideOutLeft {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* Collapsible group animations */
+  [data-state="open"] .space-y-1 {
+    animation: expandDown 0.2s ease-out;
+  }
+
+  [data-state="closed"] .space-y-1 {
+    animation: collapseUp 0.2s ease-out;
+  }
+
+  @keyframes expandDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes collapseUp {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+}

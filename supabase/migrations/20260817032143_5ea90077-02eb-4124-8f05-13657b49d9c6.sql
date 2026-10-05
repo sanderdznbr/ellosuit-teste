@@ -1,0 +1,3 @@
+ALTER TABLE public.email_events DROP CONSTRAINT email_events_email_id_fkey;
+ALTER TABLE public.email_events ADD CONSTRAINT email_events_email_id_fkey FOREIGN KEY (email_id) REFERENCES public.emails(id) ON DELETE CASCADE;
+CREATE POLICY "Users can delete email events of their emails" ON public.email_events FOR DELETE TO authenticated USING (email_id IN (SELECT id FROM public.emails WHERE company_id IN (SELECT company_id FROM public.company_users WHERE user_id = auth.uid()) OR user_id = auth.uid()));

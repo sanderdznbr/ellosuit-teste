@@ -1,0 +1,2 @@
+ALTER TABLE public.whatsapp_conversations ADD COLUMN IF NOT EXISTS temperature_stage text;
+CREATE INDEX IF NOT EXISTS idx_whatsapp_conversations_temperature_stage ON public.whatsapp_conversations (temperature_stage);
