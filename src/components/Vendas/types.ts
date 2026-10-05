@@ -190,13 +190,24 @@ export const PIPELINE_TEMPLATES: { id: string; name: string; stages: string[] }[
   },
 ];
 
+/** Paleta padrão das etapas — usada por buildStages e pelo builder do funil. */
+export const STAGE_PALETTE = [
+  '#374DA4',
+  '#4D7CFF',
+  '#0EA5E9',
+  '#10B981',
+  '#F59E0B',
+  '#EF4444',
+  '#8B5CF6',
+  '#6B7280',
+];
+
 export function buildStages(titles: string[]): PipelineStage[] {
-  const palette = ['#374DA4', '#4D7CFF', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#6B7280'];
   const n = Math.max(titles.length - 1, 1);
   return titles.map((title, i) => ({
     id: uid(),
     title,
-    color: palette[i % palette.length],
+    color: STAGE_PALETTE[i % STAGE_PALETTE.length],
     weight: Math.max(40, Math.round(100 - i * (55 / n))),
   }));
 }
