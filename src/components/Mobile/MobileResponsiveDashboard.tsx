@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAdminMaster } from '@/hooks/useAdminMaster';
 import { useIsMobile } from '@/hooks/use-mobile';
 import DashboardLayout from '@/components/Dashboard/DashboardLayout';
+import { useGmailOAuthCallback } from '@/hooks/useGmailOAuthCallback';
 import MobileAppHeader from '@/components/Mobile/MobileAppHeader';
 import MobileAppLauncher from '@/components/Mobile/MobileAppLauncher';
 import ModuleGate from '@/components/shared/ModuleGate';
@@ -128,6 +129,8 @@ const MobileResponsiveDashboard = () => {
     const [launcherOpen, setLauncherOpen] = useState(false);
     const { status, loading: statusLoading } = useApprovalStatus();
    const { isAdminMaster, loading: adminLoading } = useAdminMaster();
+   // Processa o callback OAuth do Gmail em qualquer rota (ex.: redirects legados)
+   useGmailOAuthCallback();
 
   const handleNavigate = (_page: string) => {
     // Legacy prop - kept for Analytics compatibility
