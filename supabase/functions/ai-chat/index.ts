@@ -1,5 +1,6 @@
-// AI Chat function using Lovable AI Gateway
+// AI Chat function — chat completions pela API da OpenAI (ver _shared/llm.ts)
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from "../_shared/llm.ts";
 
 async function logUsage(params: { service_type: string; action: string; model?: string; input_tokens?: number; output_tokens?: number; total_cost: number; company_id?: string; user_id?: string; metadata?: Record<string, any> }) {
   try {
@@ -33,11 +34,6 @@ Deno.serve(async (req) => {
   try {
     const { messages, message, personality, instructions, model = 'openai/gpt-5', stream = false, temperature } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
-
     // Build messages array
     let apiMessages = [];
     
@@ -57,43 +53,34 @@ Deno.serve(async (req) => {
 
     console.log('🤖 Processing chat request:', { model, messageCount: apiMessages.length, stream });
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: apiMessages,
-        stream: stream,
-        ...(temperature != null ? { temperature } : {}),
-      }),
+    const response = await chatCompletion({
+      model,
+      messages: apiMessages,
+      stream,
+      ...(temperature != null ? { temperature } : {}),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ AI Gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ 
-          error: 'Limite de requisições atingido. Tente novamente em alguns segundos.' 
-        }), {
-          status: 429,
+      console.error('❌ OpenAI error:', response.status, errorText);
+
+      const friendly =
+        response.status === 429
+          ? 'Limite de requisições atingido. Tente novamente em alguns segundos.'
+          : response.status === 401 || response.status === 403
+            ? 'Chave da OpenAI inválida ou sem permissão. Confira a secret OPENAI_API_KEY.'
+            : response.status === 400 || response.status === 404
+              ? `Modelo indisponível para esta conta da OpenAI. Detalhe: ${errorText.substring(0, 200)}`
+              : null;
+
+      if (friendly) {
+        return new Response(JSON.stringify({ error: friendly }), {
+          status: response.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ 
-          error: 'Créditos insuficientes. Adicione créditos na sua conta Lovable.' 
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      throw new Error(`AI Gateway error: ${response.status} - ${errorText}`);
+
+      throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
     }
 
     // If streaming, pass through the response
@@ -120,7 +107,7 @@ Deno.serve(async (req) => {
     const totalCost = (inputTokens / 1000) * costPer1kInput + (outputTokens / 1000) * costPer1kOutput;
 
     logUsage({
-      service_type: 'lovable_ai',
+      service_type: 'openai',
       action: 'chat_completion',
       model,
       input_tokens: inputTokens,

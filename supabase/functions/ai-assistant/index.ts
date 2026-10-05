@@ -1,5 +1,6 @@
 // AI Assistant Orchestrator - Full platform assistant with tool calling
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { chatCompletion } from '../_shared/llm.ts';
 
 async function logUsage(params: { service_type: string; action: string; model?: string; input_tokens?: number; output_tokens?: number; total_cost: number; user_id?: string; company_id?: string; metadata?: Record<string, any> }) {
   try {
@@ -3086,9 +3087,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -3311,14 +3309,7 @@ IMPORTANTE: Só sugira ir para outra conversa se o assunto for REALMENTE relevan
     async function fetchAIWithRetry(body: any, maxRetries = 3): Promise<Response> {
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
-          const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Lovable-API-Key': LOVABLE_API_KEY,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-          });
+          const res = await chatCompletion(body);
           if ((res.status === 429 || res.status >= 500) && attempt < maxRetries - 1) {
             const wait = Math.min(2000 * Math.pow(2, attempt), 15000);
             console.warn(`⏳ [AI-ASSISTANT] ${res.status}, retry em ${wait}ms (${attempt + 1}/${maxRetries})`);

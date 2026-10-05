@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { isWithinActiveHours, normalizeActiveHours } from "../_shared/active-hours.ts";
 import { classifyPipelineStage } from "../_shared/pipelineClassifier.ts";
+import { chatCompletion } from "../_shared/llm.ts";
 
 function normalizeEvolutionBaseUrl(value: string): string {
   const trimmed = (value || '').trim().replace(/\/+$/, '');
@@ -4411,8 +4412,8 @@ Deno.serve(async (req) => {
                             // === AI DEEP FALLBACK: Scan entire flow tree to find matching product/option ===
                             let aiMatchedIndex = -1;
                             try {
-                              const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-                              if (LOVABLE_API_KEY) {
+                              const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+                              if (OPENAI_API_KEY) {
                                 // Build a complete map of all reachable nodes from current node
                                 const flowMap: { path: string; nodeId: string; content: string; btns: string[] }[] = [];
                                 const visited = new Set<string>();
@@ -4462,17 +4463,13 @@ Responda SOMENTE o número da opção (1, 2, 3...). Se não conseguir determinar
 
                                 console.log(`🤖🧠 [CHATBOT-AI] Deep fallback: "${userInput}" - ${flowMap.length} nodes scanned`);
                                 
-                                const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-                                  method: "POST",
-                                  headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-                                  body: JSON.stringify({
-                                    model: "google/gemini-3-flash-preview",
-                                    messages: [
-                                      { role: "system", content: aiPrompt },
-                                      { role: "user", content: userInput },
-                                    ],
-                                    temperature: 0.05,
-                                  }),
+                                const aiResp = await chatCompletion({
+                                  model: "google/gemini-3-flash-preview",
+                                  messages: [
+                                    { role: "system", content: aiPrompt },
+                                    { role: "user", content: userInput },
+                                  ],
+                                  temperature: 0.05,
                                 });
                                 
                                 if (aiResp.ok) {
@@ -4656,18 +4653,14 @@ Responda SOMENTE o número da opção (1, 2, 3...). Se não conseguir determinar
                                         } else {
                                           // Standard agent → use Lovable AI Gateway directly
                                           const welcomePrompt = `Personalidade: ${aiAgent.personality || 'profissional e atencioso'}\nTom: ${agentHumor}\n\n${aiAgent.instructions || ''}\n\nVocê acabou de entrar na conversa com o cliente. Envie uma saudação breve e natural (1-2 frases). Não faça perguntas complexas, apenas cumprimente.`;
-                                          const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-                                          if (LOVABLE_API_KEY) {
-                                            const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-                                              method: 'POST',
-                                              headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-                                              body: JSON.stringify({
-                                                model: (agentSettings.model as string) || 'google/gemini-3-flash-preview',
-                                                messages: [
-                                                  { role: 'system', content: welcomePrompt },
-                                                  { role: 'user', content: 'O cliente foi transferido do chatbot para você. Envie sua saudação.' },
-                                                ],
-                                              }),
+                                          const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+                                          if (OPENAI_API_KEY) {
+                                            const aiResp = await chatCompletion({
+                                              model: (agentSettings.model as string) || 'google/gemini-3-flash-preview',
+                                              messages: [
+                                                { role: 'system', content: welcomePrompt },
+                                                { role: 'user', content: 'O cliente foi transferido do chatbot para você. Envie sua saudação.' },
+                                              ],
                                             });
                                             if (aiResp.ok) {
                                               const aiData = await aiResp.json();
@@ -4677,7 +4670,7 @@ Responda SOMENTE o número da opção (1, 2, 3...). Se não conseguir determinar
                                               console.error('🤖🔄 [CHATBOT] AI Gateway welcome HTTP error:', aiResp.status, await aiResp.text());
                                             }
                                           } else {
-                                            console.error('🤖🔄 [CHATBOT] LOVABLE_API_KEY missing');
+                                            console.error('🤖🔄 [CHATBOT] OPENAI_API_KEY missing');
                                           }
                                         }
 
@@ -5038,24 +5031,20 @@ Responda SOMENTE o número da opção (1, 2, 3...). Se não conseguir determinar
 
                                 let aiText = fallback;
                                 try {
-                                  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-                                  if (LOVABLE_API_KEY) {
-                                    const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LOVABLE_API_KEY}` },
-                                      body: JSON.stringify({
-                                        model,
-                                        messages: [
-                                          { role: 'system', content: finalSystemPrompt },
-                                          ...history,
-                                          ...(userText && (history.length === 0 || history[history.length - 1].content !== userText)
-                                            ? [{ role: 'user' as const, content: userText }]
-                                            : []),
-                                          ...(history.length === 0 && !userText
-                                            ? [{ role: 'user' as const, content: 'Cumprimente o cliente de forma calorosa e pergunte como pode ajudar hoje.' }]
-                                            : []),
-                                        ],
-                                      }),
+                                  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+                                  if (OPENAI_API_KEY) {
+                                    const aiRes = await chatCompletion({
+                                      model,
+                                      messages: [
+                                        { role: 'system', content: finalSystemPrompt },
+                                        ...history,
+                                        ...(userText && (history.length === 0 || history[history.length - 1].content !== userText)
+                                          ? [{ role: 'user' as const, content: userText }]
+                                          : []),
+                                        ...(history.length === 0 && !userText
+                                          ? [{ role: 'user' as const, content: 'Cumprimente o cliente de forma calorosa e pergunte como pode ajudar hoje.' }]
+                                          : []),
+                                      ],
                                     });
                                     if (aiRes.ok) {
                                       const j = await aiRes.json();
@@ -5064,7 +5053,7 @@ Responda SOMENTE o número da opção (1, 2, 3...). Se não conseguir determinar
                                       console.error('🧠 [ai_agent_inline] gateway error', aiRes.status, await aiRes.text());
                                     }
                                   } else {
-                                    console.warn('🧠 [ai_agent_inline] LOVABLE_API_KEY missing');
+                                    console.warn('🧠 [ai_agent_inline] OPENAI_API_KEY missing');
                                   }
                                 } catch (aiErr) {
                                   console.error('🧠 [ai_agent_inline] exception', aiErr);
