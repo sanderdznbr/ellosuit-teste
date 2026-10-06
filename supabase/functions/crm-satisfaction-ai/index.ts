@@ -1,5 +1,6 @@
 // CRM Satisfação AI — dynamic gain/loss analysis with AI-chosen topics
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,8 +61,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -131,21 +132,14 @@ Deno.serve(async (req) => {
 CONVERSAS:
 ${joined}`;
 
-    const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const resp = await chatCompletion({
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'user', content: userPrompt },
         ],
         response_format: { type: 'json_object' },
-      }),
-    });
+      });
 
     if (!resp.ok) {
       const txt = await resp.text();

@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +8,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
 type Classification = 'interested' | 'not_interested' | 'unclear';
 
@@ -16,16 +17,10 @@ async function classify(content: string, offer: string): Promise<Classification>
   const quickYes = /\b(sim|quero|tenho interesse|interessado|interessada|manda|envia|pode mandar|claro|bora|vamos|me passa|link)\b/.test(normalized);
   const quickNo = /\b(n[aã]o|nao quero|sem interesse|para de|pare|descadastr|remove|remover|nunca mais)\b/.test(normalized);
 
-  if (!LOVABLE_API_KEY) return quickYes && !quickNo ? 'interested' : quickNo ? 'not_interested' : 'unclear';
+  if (!OPENAI_API_KEY) return quickYes && !quickNo ? 'interested' : quickNo ? 'not_interested' : 'unclear';
 
   try {
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Lovable-API-Key': LOVABLE_API_KEY,
-      },
-      body: JSON.stringify({
+    const res = await chatCompletion({
         model: 'google/gemini-3.1-flash-lite',
         messages: [
           {
@@ -40,8 +35,7 @@ async function classify(content: string, offer: string): Promise<Classification>
           },
           { role: 'user', content: content?.slice(0, 1500) || '' },
         ],
-      }),
-    });
+      });
 
     if (res.status === 402 || res.status === 403) {
       console.error('[DISPATCH-QUALIFIER] AI bloqueada:', res.status, await res.text());

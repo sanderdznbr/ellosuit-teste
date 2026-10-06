@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from '../_shared/llm.ts';
 
 async function logUsage(params: { service_type: string; action: string; model?: string; input_tokens?: number; output_tokens?: number; total_cost: number; metadata?: Record<string, any> }) {
   try {
@@ -234,16 +235,10 @@ ${transcriptsSummary}
     console.log('📊 Ello Vision data summary length:', dataSummary.length);
 
     // Call AI for comprehensive analysis
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const aiResponse = await chatCompletion({
         model: 'google/gemini-3-flash-preview',
         messages: [
           {
@@ -317,8 +312,7 @@ REGRAS:
           { role: 'user', content: dataSummary }
         ],
         temperature: 0.7,
-      }),
-    });
+      });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();

@@ -1,4 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -429,9 +430,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY não configurada" }), {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "OPENAI_API_KEY não configurada" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -535,13 +536,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const callGateway = (extraMessages: any[] = [], modelOverride?: string) => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const callGateway = (extraMessages: any[] = [], modelOverride?: string) => chatCompletion({
         // Default to FLASH for low latency. Pro takes 40-130s for build mode
         // which makes the UI feel broken. Flash returns valid flow JSON in
         // ~2-10s. Pro is only used as a fallback when flash output is unparseable.
@@ -555,8 +550,7 @@ Deno.serve(async (req) => {
         ],
         response_format: { type: "json_object" },
         temperature: 0.3,
-      }),
-    });
+      });
 
     let aiRes = await callGateway();
 

@@ -1,3 +1,4 @@
+import { chatCompletion } from '../_shared/llm.ts';
 // CRM Sales AI - helpers for sales-focused conversation actions
 // Actions: suggest_reply | analyze_lead | summary_next_steps | follow_up | lead_score | copilot
 
@@ -191,8 +192,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
 
     const transcript = buildTranscript(messages, contactName);
     const prompt = buildPrompt(action, transcript, contactName);
@@ -231,20 +232,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    const resp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const resp = await chatCompletion({
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: 'Você é um copiloto de vendas via WhatsApp. Siga as regras à risca.' },
           { role: 'user', content: userContent.length > 1 ? userContent : prompt },
         ],
-      }),
-    });
+      });
 
     if (!resp.ok) {
       const txt = await resp.text();

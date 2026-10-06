@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,7 +42,7 @@ serve(async (req) => {
       }
 
       // Use AI to interpret the message
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
       
       const today = new Date().toISOString().split('T')[0];
       const dayOfWeek = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'][new Date().getDay()];
@@ -66,21 +67,14 @@ ATENÇÃO: O horário no suggested_date DEVE ser idêntico ao mencionado pelo pa
 
       let aiResult = { type: 'cancel', suggested_date: null as string | null, interpretation: 'Não foi possível interpretar a resposta' };
 
-      if (LOVABLE_API_KEY) {
+      if (OPENAI_API_KEY) {
         try {
-          const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+          const aiResponse = await chatCompletion({
               model: 'google/gemini-3-flash-preview',
               messages: [
                 { role: 'user', content: aiPrompt }
               ],
-            }),
-          });
+            });
 
           if (aiResponse.ok) {
             const aiData = await aiResponse.json();

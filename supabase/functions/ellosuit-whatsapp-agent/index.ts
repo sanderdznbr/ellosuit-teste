@@ -1,5 +1,6 @@
 // Ellosuit WhatsApp Agent - AI agent with tool calling for ALL platform operations
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from '../_shared/llm.ts';
 
 async function logUsage(params: { service_type: string; action: string; model?: string; input_tokens?: number; output_tokens?: number; total_cost: number; user_id?: string; company_id?: string; metadata?: Record<string, any> }) {
   try {
@@ -1229,8 +1230,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -1292,14 +1293,10 @@ Deno.serve(async (req) => {
     console.log(`🤖 [ELLOSUIT-AGENT] Processing for user=${userId}, company=${companyId}, msgs=${apiMessages.length}, tools=${TOOLS.length}`);
 
     // First AI call
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const response = await chatCompletion({
         model: (settings.model as string) || 'google/gemini-3-flash-preview',
         messages: apiMessages, tools: TOOLS, tool_choice: 'auto', temperature,
-      }),
-    });
+      });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -1334,14 +1331,10 @@ Deno.serve(async (req) => {
         toolResults.push({ role: 'tool', tool_call_id: toolCall.id, content: result });
       }
 
-      const followUpResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const followUpResponse = await chatCompletion({
           model: (settings.model as string) || 'google/gemini-3-flash-preview',
           messages: [...apiMessages, choice.message, ...toolResults], temperature,
-        }),
-      });
+        });
 
       if (followUpResponse.ok) {
         const followUpData = await followUpResponse.json();

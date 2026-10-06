@@ -1,9 +1,9 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { chatCompletion } from '../_shared/llm.ts';
 
 interface Message { role: 'user' | 'assistant'; content: string }
 interface KanbanColumn { id: string; title: string; color: string }
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!
 
 const SYSTEM = `Você é um assistente que ajuda a criar REGRAS DE AUTOMAÇÃO para um pipeline (Kanban) de WhatsApp.
 
@@ -43,18 +43,14 @@ Deno.serve(async (req) => {
 
     const context = `Colunas atuais:\n${JSON.stringify(body.currentColumns ?? [], null, 2)}\n\nRegras já existentes:\n${JSON.stringify(body.currentRules ?? [], null, 2)}`
 
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const res = await chatCompletion({
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'system', content: context },
           ...messages,
         ],
-      }),
-    })
+      })
 
     if (!res.ok) {
       const text = await res.text()

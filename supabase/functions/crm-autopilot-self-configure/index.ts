@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,6 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -88,17 +88,13 @@ Retorne APENAS JSON, sem markdown, sem comentários.
 MENSAGENS:
 ${samples.slice(0, 120).map((s, i) => `${i + 1}. ${s.slice(0, 400)}`).join("\n")}`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "Você é um assistente que responde apenas com JSON válido." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const aiRes = await chatCompletion({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: "Você é um assistente que responde apenas com JSON válido." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
     });
 
     if (!aiRes.ok) {

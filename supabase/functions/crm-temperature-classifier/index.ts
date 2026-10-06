@@ -1,7 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
+import { chatCompletion } from '../_shared/llm.ts';
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -101,18 +101,14 @@ Deno.serve(async (req) => {
     }))
 
     const classifyBatch = async (batch: typeof payload): Promise<Array<{ id: string; stage: string }>> => {
-      const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const aiRes = await chatCompletion({
           model: 'google/gemini-2.5-flash',
           messages: [
             { role: 'system', content: SYSTEM },
             { role: 'user', content: JSON.stringify({ conversations: batch }) },
           ],
           temperature: 0,
-        }),
-      })
+        })
       if (!aiRes.ok) {
         const txt = await aiRes.text()
         console.error(`AI gateway error ${aiRes.status}: ${txt.slice(0, 200)}`)

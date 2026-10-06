@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,15 +8,10 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
 async function callAi(messages: any[]) {
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY! },
-    body: JSON.stringify({ model: "google/gemini-2.5-flash", messages, response_format: { type: "json_object" } }),
-  });
+  const r = await chatCompletion({ model: "google/gemini-2.5-flash", messages, response_format: { type: "json_object" } });
   if (!r.ok) throw new Error(`ai_${r.status}: ${await r.text()}`);
   const j = await r.json();
   return j?.choices?.[0]?.message?.content || "";

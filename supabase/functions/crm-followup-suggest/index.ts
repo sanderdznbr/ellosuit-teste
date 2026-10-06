@@ -1,11 +1,12 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -33,19 +34,12 @@ Responda APENAS um JSON valido no formato:
 Nada antes ou depois do JSON.`;
 
 async function fetchAi(messages: Array<{ role: string; content: string }>) {
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": LOVABLE_API_KEY,
-    },
-    body: JSON.stringify({
+  if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY missing");
+  const res = await chatCompletion({
       model: "google/gemini-2.5-flash",
       messages,
       response_format: { type: "json_object" },
-    }),
-  });
+    });
   if (res.status === 402) throw new Error("ai_credits_exhausted");
   if (res.status === 429) throw new Error("ai_rate_limited");
   if (!res.ok) throw new Error(`ai_error_${res.status}: ${await res.text()}`);

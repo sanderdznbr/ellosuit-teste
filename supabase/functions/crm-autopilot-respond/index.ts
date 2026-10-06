@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { chatCompletion } from '../_shared/llm.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,15 +9,11 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
 async function callAi(messages: any[]) {
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Lovable-API-Key": LOVABLE_API_KEY! },
-    body: JSON.stringify({ model: "google/gemini-2.5-flash", messages, response_format: { type: "json_object" } }),
-  });
+  const r = await chatCompletion({ model: "google/gemini-2.5-flash", messages, response_format: { type: "json_object" } });
   if (r.status === 402) throw new Error("ai_credits_exhausted");
   if (r.status === 429) throw new Error("ai_rate_limited");
   if (!r.ok) throw new Error(`ai_${r.status}: ${await r.text()}`);
@@ -119,7 +116,7 @@ function scheduleCustomerHoldMessage(params: {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY missing");
     const { conversationId, incomingMessageId, force, mode } = await req.json();
     if (!conversationId) return new Response(JSON.stringify({ error: "conversationId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

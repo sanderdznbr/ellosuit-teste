@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { chatCompletion } from '../_shared/llm.ts';
 
 interface Message { role: 'user' | 'assistant'; content: string }
 interface KanbanColumn { id: string; title: string; color: string }
@@ -11,7 +12,6 @@ interface ClassifyConv {
   human_takeover?: boolean;
 }
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!
 
 const SYSTEM = `Você é um assistente que ajuda a organizar pipelines de vendas (Kanban) para times de atendimento no WhatsApp.
 
@@ -75,17 +75,13 @@ Responda APENAS um bloco JSON no formato:
         conversations: convs.slice(0, 200),
       })
 
-      const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await chatCompletion({
           model: 'google/gemini-2.5-flash',
           messages: [
             { role: 'system', content: CLASSIFY_SYSTEM },
             { role: 'user', content: userPayload },
           ],
-        }),
-      })
+        })
       if (!res.ok) {
         const t = await res.text()
         return new Response(JSON.stringify({ error: 'ai_error', detail: t }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
@@ -119,18 +115,14 @@ Responda APENAS um bloco JSON no formato:
 
     const context = `Colunas atuais do pipeline:\n${JSON.stringify(currentColumns ?? [], null, 2)}`
 
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const res = await chatCompletion({
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: SYSTEM },
           { role: 'system', content: context },
           ...messages,
         ],
-      }),
-    })
+      })
 
     if (!res.ok) {
       const text = await res.text()
