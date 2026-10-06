@@ -1,0 +1,26 @@
+/* Estilos do componente de avatar animado (PastelAgent).
+   Sem seletores globais, sem fontes ou assets externos. */
+.pastel-agent {
+  --agent-size: 280px;
+  display: inline-block;
+  width: var(--agent-size);
+  max-width: 100%;
+  aspect-ratio: 1;
+  vertical-align: middle;
+  contain: layout;
+}
+.pastel-agent svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.pastel-agent .pa-body {
+  transform-origin: 120px 111px;
+}
+.pastel-agent .pa-eye {
+  fill: none;
+  /* A cor do traco vem inline da paleta do estilo (olhos, aneis, check e X). */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import AgentAvatar, { type AgentAvatarState } from './AgentAvatar/AgentAvatar';
 
 const OMNI_COLOR = '#374DA4';
 const MESSAGE_SEPARATOR = '|||';
@@ -73,6 +74,8 @@ const BotIAChat: React.FC<BotIAChatProps> = ({ agent, onClose }) => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // O avatar do cabecalho acompanha a conversa: aneis enquanto espera, resultado no fim.
+  const [avatarState, setAvatarState] = useState<AgentAvatarState>('idle');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -104,6 +107,7 @@ const BotIAChat: React.FC<BotIAChatProps> = ({ agent, onClose }) => {
     const currentInput = inputMessage.trim();
     setInputMessage('');
     setIsLoading(true);
+    setAvatarState('loading');
 
     const conversationHistory = messages.map(m => ({ role: m.role, content: m.content }));
 
@@ -243,7 +247,9 @@ const BotIAChat: React.FC<BotIAChatProps> = ({ agent, onClose }) => {
           ));
         }
       }
+      setAvatarState('success');
     } catch (error) {
+      setAvatarState('failure');
       console.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -271,10 +277,8 @@ const BotIAChat: React.FC<BotIAChatProps> = ({ agent, onClose }) => {
     <Card className="h-full flex flex-col border-0 shadow-none">
       <CardHeader className="flex-shrink-0 border-b px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${OMNI_COLOR}, ${OMNI_COLOR}99)` }}>
-              <Bot className="h-5 w-5 text-white" />
-            </div>
+          <div className="flex items-center gap-1">
+            <AgentAvatar styleId={agent.settings?.agentStyle} size={64} state={avatarState} />
             <div>
               <CardTitle className="text-lg">{agent.name}</CardTitle>
               <p className="text-sm text-gray-500">

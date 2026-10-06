@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,26 +24,39 @@ interface ExtractedData {
   ai_agents: { name: string };
 }
 
-const AgentConversions: React.FC = () => {
+interface AgentConversionsProps {
+  /** Empresa do usuário logado. Os dados extraídos são isolados por empresa. */
+  companyId?: string | null;
+}
+
+const AgentConversions: React.FC<AgentConversionsProps> = ({ companyId }) => {
   const [data, setData] = useState<ExtractedData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<ExtractedData | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
+    if (!companyId) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    // Filtra pelos agentes da empresa do usuário: sem isso, a lista mostrava
+    // conversões de todas as contas. O `!inner` garante o filtro no banco.
     const { data: results, error } = await supabase
       .from('ai_agent_extracted_data')
-      .select('*, ai_agents(name)')
+      .select('*, ai_agents!inner(name)')
+      .eq('ai_agents.company_id', companyId)
       .order('last_updated_at', { ascending: false });
 
-    if (!error) setData(results as any || []);
+    if (!error) setData((results as any) || []);
     setLoading(false);
-  };
+  }, [companyId]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const filteredData = data.filter(item => 
     item.contact_phone.includes(searchQuery) || 
@@ -57,6 +70,8 @@ const AgentConversions: React.FC = () => {
 
   const deleteData = async (id: string) => {
     if (!confirm('Excluir este registro?')) return;
+    // Só apaga registros que vieram da lista da empresa (a RLS também barra o resto).
+    if (!data.some(item => item.id === id)) return;
     const { error } = await supabase.from('ai_agent_extracted_data').delete().eq('id', id);
     if (!error) {
       setData(prev => prev.filter(i => i.id !== id));

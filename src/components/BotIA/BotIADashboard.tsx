@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import IntegrationTab from './IntegrationTab';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import AgentAvatar from './AgentAvatar/AgentAvatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -226,7 +226,7 @@ const BotIADashboard: React.FC = () => {
         </div>
 
         {activeView === 'conversions' ? (
-          <AgentConversions />
+          <AgentConversions companyId={companyId} />
         ) : (
           <Card className="rounded-2xl border-none shadow-sm overflow-x-auto">
             <Table className="min-w-[720px]">
@@ -255,12 +255,7 @@ const BotIADashboard: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 rounded-xl">
-                          <AvatarImage src={agent.avatar_url || undefined} />
-                          <AvatarFallback className="rounded-xl text-white text-xs font-bold" style={{ backgroundColor: OMNI_COLOR }}>
-                            {agent.name.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <AgentAvatar styleId={agent.settings?.agentStyle} size={36} className="shrink-0" />
                         <div className="flex flex-col min-w-0">
                           <span className="font-medium text-gray-900 truncate">{agent.name}</span>
                           <span className="text-[10px] text-gray-400 truncate max-w-[280px]">{agent.description || 'Sem descrição'}</span>

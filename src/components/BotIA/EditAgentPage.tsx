@@ -21,6 +21,8 @@ import { supabase } from '@/integrations/supabase/client';
 import RadialGlowOrb from '@/components/ChatBot/RadialGlowOrb';
 import IntegrationTab from './IntegrationTab';
 import AgentDebugChat from './AgentDebugChat';
+import AgentAvatar from './AgentAvatar/AgentAvatar';
+import { AGENT_STYLES, DEFAULT_AGENT_STYLE_ID, isAgentStyleId } from './AgentAvatar/agentStyles';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -119,6 +121,8 @@ const EditAgentPage: React.FC = () => {
   const [description, setDescription] = useState('');
   const [personality, setPersonality] = useState('');
   const [instructions, setInstructions] = useState('');
+  /** Visual do agente: persistido em `settings.agentStyle` e usado em toda a UI. */
+  const [agentStyle, setAgentStyle] = useState<string>(DEFAULT_AGENT_STYLE_ID);
   const [doNot, setDoNot] = useState('');
   const [model, setModel] = useState('google/gemini-3-flash-preview');
   const [isActive, setIsActive] = useState(true);
@@ -224,6 +228,7 @@ const EditAgentPage: React.FC = () => {
       setTemperature(settings?.temperature || 0.7);
       setContextMemory(settings?.contextMemory || 10);
       setTrainingFiles(settings?.trainingFiles || []);
+      setAgentStyle(isAgentStyleId(settings?.agentStyle) ? settings.agentStyle : DEFAULT_AGENT_STYLE_ID);
       setDoNot(settings?.doNot || '');
       setHumor(settings?.humor || 'profissional');
       setLanguage(settings?.language || 'pt-BR');
@@ -309,6 +314,9 @@ const EditAgentPage: React.FC = () => {
           whatsapp_enabled: whatsappEnabled,
           whatsapp_session_id: whatsappEnabled && whatsappSessionId ? whatsappSessionId : null,
           settings: {
+            // Preservado sempre: e o que faz a lista e o chat manterem o visual
+            // escolhido depois de editar o agente.
+            agentStyle,
             maxResponseChars,
             temperature,
             contextMemory,
@@ -437,9 +445,7 @@ const EditAgentPage: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-[#374DA4]/20 shrink-0" style={{ background: `linear-gradient(135deg, ${OMNI_COLOR}, #4D7CFF)` }}>
-                {name.charAt(0).toUpperCase()}
-              </div>
+              <AgentAvatar styleId={agentStyle} size={40} className="shrink-0" />
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg font-bold text-foreground leading-tight truncate">{name}</h1>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -515,6 +521,40 @@ const EditAgentPage: React.FC = () => {
           <div className="space-y-6">
             <Card className="rounded-2xl border-border">
               <CardContent className="p-4 sm:p-6 space-y-5">
+                <div>
+                  <Label className="text-sm font-medium text-foreground/90">Visual do Agente</Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    O avatar escolhido acompanha o agente na lista, no chat e aqui.
+                  </p>
+                  <div
+                    role="radiogroup"
+                    aria-label="Visual do agente"
+                    className="grid grid-cols-3 sm:grid-cols-5 gap-2"
+                  >
+                    {AGENT_STYLES.map((style) => {
+                      const selected = style.id === agentStyle;
+                      return (
+                        <button
+                          key={style.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => { setAgentStyle(style.id); markChanged(); }}
+                          className={`rounded-2xl border p-2 flex flex-col items-center gap-0.5 transition-all ${
+                            selected ? 'border-2 bg-[#F0F2FE] dark:bg-white/5' : 'border-border hover:border-gray-300'
+                          }`}
+                          style={selected ? { borderColor: OMNI_COLOR } : {}}
+                        >
+                          <AgentAvatar styleId={style.id} size={64} paused={!selected} />
+                          <span className="text-[11px] font-semibold text-foreground text-center leading-tight">
+                            {style.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div>
                   <Label className="text-sm font-medium text-foreground/90">Nome do Agente *</Label>
                   <Input value={name} onChange={(e) => { setName(e.target.value); markChanged(); }} placeholder="Ex: Assistente de Vendas" className="mt-1.5 rounded-xl h-11" />
