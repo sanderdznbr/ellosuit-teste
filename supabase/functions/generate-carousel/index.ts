@@ -1,4 +1,3 @@
-import { chatCompletion } from '../_shared/llm.ts';
 import { chatCompletion, generateImage } from '../_shared/llm.ts';
 // Edge function for carousel generation
 
