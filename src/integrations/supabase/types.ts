@@ -5433,6 +5433,38 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_workspaces: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          data: Json
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_workspaces_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_step_events: {
         Row: {
           event_type: string

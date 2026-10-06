@@ -6,9 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FunnelBuilder } from './FunnelBuilder';
 import { FunnelChart } from './FunnelChart';
+import { FunnelStylePicker } from './FunnelStylePicker';
+import { FunnelSwitcher } from './FunnelSwitcher';
+import { StageAutomationChat } from './StageAutomationChat';
 import { formatBRL } from './FunnelKanban';
 import { useFunnelData } from './useFunnelData';
-import { defaultWeight, loadCrmColumns, type PipelineColumn } from './types';
+import { useToast } from '@/hooks/use-toast';
+import { defaultWeight, loadCrmColumns, resolveChartStyle, type PipelineColumn } from './types';
 
 /**
  * Página do funil: criação e edição via builder drag-and-drop (boca → saída)
@@ -19,18 +23,40 @@ import { defaultWeight, loadCrmColumns, type PipelineColumn } from './types';
 export function FunilPage() {
   const navigate = useNavigate();
   const data = useFunnelData();
-  const { funnel, stages, stageRows, create, saveColumns, update } = data;
+  const {
+    funnel,
+    funnels,
+    stages,
+    stageRows,
+    create,
+    createFunnel,
+    deleteFunnel,
+    setActiveFunnel,
+    updateFunnelById,
+    update,
+  } = data;
+  const { toast } = useToast();
   const [newName, setNewName] = useState('');
   // Rascunho do funil antes de existir: parte das etapas atuais do CRM.
   const [draft, setDraft] = useState<PipelineColumn[]>(() => loadCrmColumns());
   const [editing, setEditing] = useState(false);
+  // Etapa cujo chat de automação está aberto (null = fechado).
+  const [automationStage, setAutomationStage] = useState<PipelineColumn | null>(null);
 
   if (!funnel) {
     const handleCreate = () => {
       if (draft.length < 2) return;
-      // Persiste as etapas ANTES de criar: newFunnel() lê loadCrmColumns().
-      saveColumns(draft);
-      create(newName.trim() || 'Meu Funil');
+      // As etapas montadas aqui são as do PRÓPRIO funil; o kanban do CRM não é
+      // mais reescrito ao criar um funil.
+      create(
+        newName.trim() || 'Meu Funil',
+        draft.map((s, i) => ({
+          id: s.id,
+          title: s.title,
+          color: s.color,
+          weight: defaultWeight(i, draft.length),
+        })),
+      );
     };
 
     return (
@@ -104,42 +130,72 @@ export function FunilPage() {
 
   const goToStage = (stageId: string) => navigate(`/dashboard/vendas/funil/${stageId}`);
 
-  /* ─── Builder: escreve no pipeline ativo ───────────────────── */
-  const builderStages: PipelineColumn[] = data.isCrmPipeline
-    ? data.columns
-    : (data.activePipeline?.stages || []).map(({ id, title, color }) => ({ id, title, color }));
+  /* ─── Builder: escreve nas etapas DO FUNIL ───────────────── */
+  /**
+   * As etapas do funil são a fonte da verdade (nome, ordem, cor e peso) — é o
+   * que o desenho mostra e o que o pipeline vinculado espelha. O builder não
+   * mexe mais nas colunas do kanban do CRM.
+   */
+  const builderStages: PipelineColumn[] = (funnel.stages || []).map(({ id, title, color }) => ({
+    id,
+    title,
+    color,
+  }));
 
   const applyStages = (next: PipelineColumn[]) => {
     if (next.length < 2) return;
-    if (data.isCrmPipeline) {
-      saveColumns(next);
-      const stageConfig = { ...(funnel.stageConfig || {}) };
-      next.forEach((c, i) => {
-        stageConfig[c.id] = {
-          ...(stageConfig[c.id] || { weight: 100 }),
-          weight: defaultWeight(i, next.length),
-        };
-      });
-      update({ stageConfig });
-    } else {
-      const previous = new Map(
-        (data.activePipeline?.stages || []).map((s) => [s.id, s] as const),
-      );
-      data.updatePipeline({
-        stages: next.map((s, i) => ({
-          ...(previous.get(s.id) || {}),
-          ...s,
-          weight: defaultWeight(i, next.length),
-        })),
-      });
-    }
+    const previous = new Map((funnel.stages || []).map((s) => [s.id, s] as const));
+    update({
+      stages: next.map((s, i) => ({
+        ...(previous.get(s.id) || {}),
+        id: s.id,
+        title: s.title,
+        color: s.color,
+        weight: defaultWeight(i, next.length),
+      })),
+    });
   };
 
+  /** Pipeline que segue ESTE funil (as etapas dele são as daqui). */
+  const linkedPipeline = data.pipelines.find((p) => p.funnelId === funnel.id) || null;
+
   const countsByStage = Object.fromEntries(stageRows.map((r) => [r.id, r.count]));
+  const chartStyle = resolveChartStyle(funnel.chartStyle);
+  const automationCounts = (funnel.automations || []).reduce<Record<string, number>>((acc, a) => {
+    if (a.active) acc[a.stageId] = (acc[a.stageId] || 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 space-y-6">
+        {/* Vários funis: um deles é o ativo em todas as páginas de Vendas */}
+        <FunnelSwitcher
+          funnels={funnels}
+          activeFunnelId={funnel.id}
+          onSelect={setActiveFunnel}
+          onCreate={(name) => {
+            createFunnel(name);
+            toast({ title: 'Funil criado', description: name });
+          }}
+          onRename={(id, name) => {
+            updateFunnelById(id, { name });
+            toast({ title: 'Funil renomeado', description: name });
+          }}
+          onDelete={(id) => {
+            if (!deleteFunnel(id)) {
+              toast({
+                title: 'Não é possível excluir',
+                description: 'O módulo precisa de ao menos um funil.',
+                variant: 'destructive',
+              });
+              return false;
+            }
+            toast({ title: 'Funil excluído' });
+            return true;
+          }}
+        />
+
         {/* Título */}
         <div className="text-center space-y-2">
           <h1
@@ -189,15 +245,36 @@ export function FunilPage() {
                   Da boca (topo) até a saída — arraste, insira e renomeie à vontade.
                 </p>
               </div>
-              <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-medium text-emerald-600">
-                {data.isCrmPipeline ? 'Pipeline sincronizado com o CRM' : 'Pipeline próprio'}
+              <span
+                className={
+                  linkedPipeline
+                    ? 'rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-medium text-emerald-600'
+                    : 'rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground'
+                }
+              >
+                {linkedPipeline
+                  ? `O pipeline “${linkedPipeline.name}” segue este funil`
+                  : 'Nenhum pipeline vinculado a este funil'}
               </span>
             </div>
             <FunnelBuilder
               stages={builderStages}
               onChange={applyStages}
               counts={countsByStage}
+              automationCounts={automationCounts}
+              onAutomate={(stageId) => {
+                const stage = builderStages.find((s) => s.id === stageId);
+                if (stage) setAutomationStage(stage);
+              }}
             />
+            {linkedPipeline && (
+              <p className="text-center text-[11px] text-muted-foreground">
+                Nome, ordem e cor das etapas valem também no pipeline “{linkedPipeline.name}”.
+              </p>
+            )}
+            <p className="text-center text-[11px] text-muted-foreground/80">
+              Toque no ⚡ de uma etapa para automatizá-la conversando com a IA
+            </p>
           </div>
         )}
 
@@ -211,8 +288,13 @@ export function FunilPage() {
             </Button>
           </div>
         ) : (
-          <div className="rounded-3xl border bg-card p-4 sm:p-8">
+          <div className="space-y-5 rounded-3xl border bg-card p-4 sm:p-8">
+            <FunnelStylePicker
+              value={chartStyle}
+              onChange={(next) => data.update({ chartStyle: next })}
+            />
             <FunnelChart
+              variant={chartStyle}
               stages={stages.map((s) => ({ id: s.id, title: s.title, color: s.color }))}
               counts={stageRows.map((r) => r.count)}
               frios={stageRows.map((r) => r.frio)}
@@ -220,7 +302,7 @@ export function FunilPage() {
               showNumbers
               onSelectStage={goToStage}
             />
-            <p className="mt-4 text-center text-xs text-muted-foreground">
+            <p className="text-center text-xs text-muted-foreground">
               Clique numa etapa para ver os contatos dela
             </p>
             <p className="mt-1 text-center text-[11px] text-muted-foreground/70 sm:hidden">
@@ -229,6 +311,16 @@ export function FunilPage() {
           </div>
         )}
       </div>
+
+      <StageAutomationChat
+        open={!!automationStage}
+        onOpenChange={(v) => !v && setAutomationStage(null)}
+        stage={automationStage}
+        stages={builderStages}
+        automations={funnel.automations || []}
+        webhookStageId={funnel.webhook?.stageId}
+        onAutomationsChange={(automations) => update({ automations })}
+      />
     </div>
   );
 }

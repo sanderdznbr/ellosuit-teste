@@ -4,22 +4,26 @@ import {
   AlertTriangle,
   ArrowDownUp,
   ArrowLeft,
-  Check,
-  GitBranch,
-  Percent,
+  Link2,
+  MoreVertical,
+  Pencil,
   Plus,
   Search,
-  Settings2,
-  Snowflake,
   Trash2,
-  TrendingUp,
-  Users,
-  Wallet,
-  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -43,10 +47,7 @@ const norm = (s: string) =>
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '');
 
-const pct = (v: number | null) =>
-  v === null ? '—' : `${(v * 100).toFixed(1).replace('.', ',')}%`;
-
-/** Página de pipelines de vendas no estilo RD Station: métricas, etapas e kanban. */
+/** Página de pipelines de vendas: seletor de pipeline e kanban. */
 export function PipelinesPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -71,15 +72,17 @@ export function PipelinesPage() {
     activePipeline,
     pipelines,
     stages,
-    localStages,
     unmapped,
     cards,
     stats,
     updatePipeline,
     moveTo,
-    addLocalStage,
     deletePipeline,
     createPipeline,
+    setActivePipeline,
+    linkPipeline,
+    funnels,
+    linkedFunnel,
   } = data;
 
   const visibleCards = useMemo(() => {
@@ -145,33 +148,6 @@ export function PipelinesPage() {
           </Button>
         </div>
 
-        {/* Métricas no topo (estilo RD) */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          <Metric icon={<Users className="h-4 w-4" />} label="Oportunidades" value={String(stats.total)} />
-          <Metric
-            icon={<Wallet className="h-4 w-4" />}
-            label="Em negociação"
-            value={formatBRL(stats.totalValue) || 'R$ 0'}
-            accent="text-emerald-600"
-          />
-          <Metric
-            icon={<TrendingUp className="h-4 w-4" />}
-            label="Ticket médio"
-            value={stats.ticket ? formatBRL(stats.ticket) || 'R$ 0' : '—'}
-          />
-          <Metric
-            icon={<Percent className="h-4 w-4" />}
-            label="Conversão"
-            value={pct(stats.conversion)}
-          />
-          <Metric
-            icon={<Snowflake className="h-4 w-4" />}
-            label="Parados 7d+"
-            value={String(stats.frios)}
-            accent={stats.frios > 0 ? 'text-sky-600' : undefined}
-          />
-        </div>
-
         {isCrmPipeline && connected.length === 0 && (
           <div className="flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-600">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -187,140 +163,115 @@ export function PipelinesPage() {
           </div>
         )}
 
-        {/* Pipelines */}
-        <div className="flex flex-wrap items-center gap-2">
-          {pipelines.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => update({ activePipelineId: p.id })}
-              className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
-                p.id === activePipeline.id
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'bg-card hover:bg-muted/60'
-              }`}
-            >
-              <GitBranch className="h-3.5 w-3.5" />
-              {p.name}
-              {p.crmSync && (
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-                    p.id === activePipeline.id ? 'bg-white/20' : 'bg-emerald-500/15 text-emerald-600'
-                  }`}
-                >
-                  CRM
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Etapas do pipeline ativo */}
-        <div className="rounded-2xl border bg-card p-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex-1 min-w-[200px]">
-              <Input
-                value={activePipeline.name}
-                onChange={(e) => updatePipeline({ name: e.target.value })}
-                className="h-9 font-semibold"
-                aria-label="Nome do pipeline"
-              />
-            </div>
-            {isCrmPipeline ? (
-              <Badge className="bg-emerald-500/15 text-emerald-600">
-                <Check className="mr-1 h-3 w-3" />
-                Sincronizado com o CRM
-              </Badge>
-            ) : (
-              <Badge variant="outline">Contatos manuais / webhook local</Badge>
-            )}
-            {isCrmPipeline && (
-              <Button variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
-                <Settings2 className="h-4 w-4 mr-2" />
-                Gerenciar etapas
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive"
-              title="Excluir pipeline"
-              onClick={() => {
-                if (!deletePipeline(activePipeline.id)) {
-                  toast({ title: 'O funil precisa de ao menos um pipeline', variant: 'destructive' });
-                  return;
-                }
-                toast({ title: 'Pipeline excluído' });
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Etapas: CRM = somente leitura (as colunas vêm do kanban do CRM) */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground mr-1">Etapas:</span>
-            {isCrmPipeline
-              ? stages.map((s) => (
+        {/* Pipelines: seletor discreto + acoes do pipeline ativo */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {pipelines.map((p) => {
+            const isActive = p.id === activePipeline.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setActivePipeline(p.id)}
+                aria-pressed={isActive}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  isActive
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-transparent bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                {p.name}
+                {p.crmSync && (
                   <span
-                    key={s.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
+                    className={`rounded-full px-1.5 text-[9px] font-bold uppercase tracking-wide ${
+                      isActive ? 'bg-primary/15 text-primary' : 'bg-emerald-500/15 text-emerald-600'
+                    }`}
                   >
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: s.color }}
-                    />
-                    {s.title}
-                    <b className="tabular-nums text-muted-foreground">{data.countOf(s.id)}</b>
+                    CRM
                   </span>
-                ))
-              : localStages.map((s, i) => (
-                  <span
-                    key={s.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border bg-background py-0.5 pl-1 pr-1.5"
+                )}
+              </button>
+            );
+          })}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+                aria-label="Opções do pipeline"
+                title="Opções do pipeline"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="rounded-2xl border-gray-100 p-1.5 min-w-[190px] shadow-lg">
+              <DropdownMenuItem
+                className="rounded-xl gap-2 cursor-pointer"
+                onClick={() => {
+                  const name = window.prompt('Nome do pipeline', activePipeline.name);
+                  if (name && name.trim() && name.trim() !== activePipeline.name) {
+                    updatePipeline({ name: name.trim() });
+                    toast({ title: 'Pipeline renomeado' });
+                  }
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+                Renomear pipeline
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="rounded-xl gap-2 cursor-pointer">
+                  <Link2 className="h-4 w-4" />
+                  Vincular ao funil
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="rounded-2xl border-gray-100 p-1.5 min-w-[210px] shadow-lg">
+                  <DropdownMenuLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Etapas do pipeline
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    className="rounded-xl gap-2 cursor-pointer"
+                    onClick={() => {
+                      linkPipeline(activePipeline.id, null);
+                      toast({ title: 'Vínculo removido', description: 'O pipeline volta a usar as próprias etapas.' });
+                    }}
                   >
-                    <input
-                      type="color"
-                      value={s.color}
-                      onChange={(e) =>
-                        updatePipeline({
-                          stages: localStages.map((st) =>
-                            st.id === s.id ? { ...st, color: e.target.value } : st,
-                          ),
-                        })
-                      }
-                      className="h-4 w-4 rounded-full border-0 bg-transparent p-0"
-                      title="Cor da etapa"
-                    />
-                    <span className="text-[10px] font-bold text-muted-foreground">{i + 1}.</span>
-                    <input
-                      value={s.title}
-                      onChange={(e) =>
-                        updatePipeline({
-                          stages: localStages.map((st) =>
-                            st.id === s.id ? { ...st, title: e.target.value } : st,
-                          ),
-                        })
-                      }
-                      className="w-28 bg-transparent text-xs outline-none"
-                    />
-                    <button
-                      className="text-muted-foreground hover:text-destructive"
-                      title="Excluir etapa"
-                      onClick={() =>
-                        updatePipeline({ stages: localStages.filter((st) => st.id !== s.id) })
-                      }
+                    Sem vínculo
+                    {!linkedFunnel && <span className="ml-auto text-[10px] text-primary">atual</span>}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {funnels.map((f) => (
+                    <DropdownMenuItem
+                      key={f.id}
+                      className="rounded-xl gap-2 cursor-pointer"
+                      onClick={() => {
+                        linkPipeline(activePipeline.id, f.id);
+                        toast({ title: 'Pipeline vinculado', description: `Agora ele segue as etapas de ${f.name}.` });
+                      }}
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-            {!isCrmPipeline && (
-              <Button variant="outline" size="sm" onClick={addLocalStage}>
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Etapa
-              </Button>
-            )}
-          </div>
+                      {f.name}
+                      <span className="ml-auto text-[10px] text-muted-foreground">
+                        {f.stages.length} etapas
+                        {linkedFunnel?.id === f.id ? ' · atual' : ''}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              <DropdownMenuItem
+                className="rounded-xl gap-2 cursor-pointer text-destructive focus:text-destructive"
+                onClick={() => {
+                  if (!deletePipeline(activePipeline.id)) {
+                    toast({ title: 'O funil precisa de ao menos um pipeline', variant: 'destructive' });
+                    return;
+                  }
+                  toast({ title: 'Pipeline excluído' });
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir pipeline
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Board com barra de controle fixa (estilo RD/Salesforce) */}
@@ -328,6 +279,15 @@ export function PipelinesPage() {
           <div className="flex flex-wrap items-center gap-2 border-b px-4 sm:px-6 py-3">
             <div className="flex items-baseline gap-2 min-w-0">
               <h2 className="text-sm font-semibold">{activePipeline.name}</h2>
+              {linkedFunnel && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary whitespace-nowrap"
+                  title={`As etapas deste pipeline são as de ${linkedFunnel.name}`}
+                >
+                  <Link2 className="h-3 w-3" />
+                  etapas de {linkedFunnel.name}
+                </span>
+              )}
               <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {visibleCards.length} contato(s) · {formatBRL(stats.totalValue) || 'R$ 0'} · arraste para mover
               </span>
@@ -402,35 +362,12 @@ export function PipelinesPage() {
         open={pipelineDialog}
         onOpenChange={setPipelineDialog}
         hasCrmPipeline={pipelines.some((p) => p.crmSync)}
-        onCreate={(name, template, crmSync) => {
-          const created = createPipeline(name, template, crmSync);
+        funnels={funnels}
+        onCreate={(name, template, crmSync, funnelId) => {
+          const created = createPipeline(name, template, crmSync, funnelId);
           if (created) toast({ title: 'Pipeline criado', description: created.name });
         }}
       />
-    </div>
-  );
-}
-
-function Metric({
-  icon,
-  label,
-  value,
-  accent,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  accent?: string;
-}) {
-  return (
-    <div className="rounded-xl border bg-card px-3.5 py-2.5">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        <span className="text-[11px]">{icon}</span>
-        <span className="text-[11px] font-medium">{label}</span>
-      </div>
-      <p className={`mt-0.5 text-lg font-bold tabular-nums leading-tight ${accent || ''}`}>
-        {value}
-      </p>
     </div>
   );
 }

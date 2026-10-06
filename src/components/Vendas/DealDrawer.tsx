@@ -22,7 +22,14 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { formatBRL, relativeTime, TEMP_COLORS } from './FunnelKanban';
-import { FunnelDeal, LocalDeal, PIPELINE_TEMPLATES, SOURCE_LABELS, SourceType } from './types';
+import {
+  FunnelDeal,
+  LocalDeal,
+  PIPELINE_TEMPLATES,
+  SalesFunnel,
+  SOURCE_LABELS,
+  SourceType,
+} from './types';
 import { Drawer, FunnelData, isFrioAt, StageView } from './useFunnelData';
 
 const TEMPS = ['frio', 'morno', 'quente', 'negociando', 'pagou', 'perdido'];
@@ -43,10 +50,9 @@ export function DealDrawer({
   const [addName, setAddName] = useState('');
   const [addPhone, setAddPhone] = useState('');
 
-  const { funnel, rows, stages, activePipeline, isCrmPipeline } = data;
+  // Negociações e leads locais agora são do documento (workspace), não do funil.
+  const { funnel, rows, stages, activePipeline, isCrmPipeline, deals, localDeals } = data;
   if (!funnel) return null;
-  const deals = funnel.deals || {};
-  const localDeals = funnel.localDeals || [];
 
   const stageOf = (stageId?: string | null) => stages.find((s) => s.id === stageId);
   const stageIdForDrawer: string | null =
@@ -525,16 +531,20 @@ export function NewPipelineDialog({
   open,
   onOpenChange,
   hasCrmPipeline,
+  funnels = [],
   onCreate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   hasCrmPipeline: boolean;
-  onCreate: (name: string, template: string, crmSync: boolean) => void;
+  /** Funis disponíveis para vincular (opcional) o pipeline novo. */
+  funnels?: SalesFunnel[];
+  onCreate: (name: string, template: string, crmSync: boolean, funnelId: string | null) => void;
 }) {
   const [name, setName] = useState('');
   const [template, setTemplate] = useState(PIPELINE_TEMPLATES[0].id);
   const [crmSync, setCrmSync] = useState(false);
+  const [funnelId, setFunnelId] = useState<string>('');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -553,12 +563,37 @@ export function NewPipelineDialog({
               placeholder="Ex.: Pipeline Inbound"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && onCreate(name, template, crmSync)}
+              onKeyDown={(e) =>
+                e.key === 'Enter' && onCreate(name, template, crmSync, funnelId || null)
+              }
             />
           </div>
           <div className="space-y-2">
+            <Label>Funil vinculado</Label>
+            <Select value={funnelId || 'none'} onValueChange={(v) => setFunnelId(v === 'none' ? '' : v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem vínculo (etapas próprias)</SelectItem>
+                {funnels.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.name} ({f.stages.length} etapas)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Com vínculo, o pipeline mostra as mesmas etapas do funil.
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label>Modelo de etapas</Label>
-            <Select value={template} onValueChange={setTemplate} disabled={crmSync}>
+            <Select
+              value={template}
+              onValueChange={setTemplate}
+              disabled={crmSync || !!funnelId}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -595,7 +630,9 @@ export function NewPipelineDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={() => onCreate(name, template, crmSync)}>Criar pipeline</Button>
+          <Button onClick={() => onCreate(name, template, crmSync, funnelId || null)}>
+            Criar pipeline
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

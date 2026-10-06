@@ -1,4 +1,30 @@
-export type ChartStyle = 'cone' | 'stacked' | 'bars';
+/** Formas do desenho do funil. Escolhidas pelo usuário e salvas em chartStyle. */
+export type ChartStyle = 'cone' | 'steps' | 'chevrons' | 'bars' | 'cards';
+
+export interface FunnelVariantInfo {
+  id: ChartStyle;
+  name: string;
+  hint: string;
+}
+
+/** Catálogo das formas disponíveis — fonte única para o seletor e para o desenho. */
+export const FUNNEL_VARIANTS: FunnelVariantInfo[] = [
+  { id: 'cone', name: 'Funil', hint: 'Cunha clássica com legenda' },
+  { id: 'steps', name: 'Degraus', hint: 'Blocos que estreitam na descida' },
+  { id: 'chevrons', name: 'Setas', hint: 'Fluxo descendente em pontas' },
+  { id: 'bars', name: 'Barras', hint: 'Nomes completos, mais legível' },
+  { id: 'cards', name: 'Cartões', hint: 'Um cartão por etapa com conversão' },
+];
+
+/** Formas antigas que podem estar salvas em funis criados antes do seletor. */
+const LEGACY_CHART_STYLE: Record<string, ChartStyle> = { stacked: 'steps' };
+
+/** Normaliza o valor salvo: mantém formas válidas e converte as antigas. */
+export function resolveChartStyle(value?: string | null): ChartStyle {
+  if (!value) return 'cone';
+  if (LEGACY_CHART_STYLE[value]) return LEGACY_CHART_STYLE[value];
+  return FUNNEL_VARIANTS.some((v) => v.id === value) ? (value as ChartStyle) : 'cone';
+}
 
 /** Configuração do funil POR etapa — a etapa em si vive no kanban do CRM (whatsapp_kanban_columns). */
 export interface FunnelStageConfig {
@@ -105,11 +131,18 @@ export interface PipelineStage {
 export interface Pipeline {
   id: string;
   name: string;
-  /** true = as etapas são as colunas do kanban do CRM (estado sincronizado). */
+  /** true = os cards vêm das conversas do CRM (whatsapp_conversations). */
   crmSync: boolean;
-  /** Etapas próprias (usadas quando crmSync = false). */
+  /** Etapas próprias — usadas apenas quando não há funil vinculado. */
   stages: PipelineStage[];
   webhookStageId?: string | null;
+  /**
+   * Funil vinculado, opcional. Quando definido, as etapas do pipeline são as
+   * etapas daquele funil (mesmos nomes, ordem, cores e pesos) — o pipeline fica
+   * igual ao funil. Sem vínculo, o pipeline usa as colunas do CRM (crmSync) ou
+   * as próprias etapas.
+   */
+  funnelId?: string | null;
 }
 
 /** Lead/negociação de um pipeline não-CRM (criado manualmente ou via webhook local). */
@@ -150,15 +183,15 @@ export interface SalesFunnel {
   channelId: string;
   /** Período dos números: 0 = tudo, 1 = hoje, 7/30 dias. */
   periodDays: number;
+  /**
+   * Etapas do funil — fonte única de nome, ordem, cor e peso.
+   * Nasce como cópia das colunas do kanban do CRM (mantendo os mesmos ids, para
+   * os leads do CRM continuarem mapeados) e depois evolui por conta própria.
+   */
+  stages: PipelineStage[];
+  /** Extras do desenho por etapa (descrição). O peso mora em `stages[].weight`. */
   stageConfig: Record<string, FunnelStageConfig>;
   webhook: { stageId: string | null };
-  /** Dados comerciais por lead do CRM (chave = conversation id). */
-  deals: Record<string, FunnelDeal>;
-  /** Vários pipelines; o primeiro (crmSync) é o sincronizado com o CRM. */
-  pipelines: Pipeline[];
-  activePipelineId: string;
-  /** Leads dos pipelines não-CRM. */
-  localDeals: LocalDeal[];
   sources: FunnelSource[];
   automations: FunnelAutomation[];
   integrations: FunnelIntegration[];
@@ -166,7 +199,29 @@ export interface SalesFunnel {
   updatedAt: string;
 }
 
+/**
+ * Documento do módulo de Vendas, um por empresa (tabela sales_workspaces).
+ *
+ * Vários funis convivem aqui e os pipelines ficam no mesmo nível, cada um com
+ * vínculo opcional a um funil (`Pipeline.funnelId`). Os dados comerciais
+ * (`deals`, `localDeals`) são do documento, não do funil, para não dividir a
+ * negociação de um lead quando ele muda de funil.
+ */
+export interface SalesWorkspace {
+  version: 3;
+  funnels: SalesFunnel[];
+  activeFunnelId: string;
+  pipelines: Pipeline[];
+  activePipelineId: string;
+  deals: Record<string, FunnelDeal>;
+  localDeals: LocalDeal[];
+}
+
+/** v3: vários funis + pipelines com vínculo opcional (novo formato). */
+export const WORKSPACE_STORAGE_KEY = 'ello_sales_workspace_v3';
+/** v2: um funil só. Mantido para migrar quem já usava. */
 export const STORAGE_KEY = 'ello_sales_funil_v2';
+/** v1: lista de funis. */
 export const LEGACY_STORAGE_KEY = 'ello_sales_funis_v1';
 export const COLUMNS_STORAGE_KEY = 'whatsapp_kanban_columns';
 
@@ -290,13 +345,23 @@ const defaultSources = (): FunnelSource[] => [
   { id: uid(), type: 'manual', label: 'Cadastro manual pela equipe', enabled: true },
 ];
 
-export function newFunnel(name: string): SalesFunnel {
-  const now = new Date().toISOString();
+/**
+ * Etapas iniciais de um funil: cópia das colunas do kanban do CRM.
+ * Os ids são os mesmos das colunas, então os leads do CRM já nascem mapeados.
+ */
+export function stagesFromCrmColumns(): PipelineStage[] {
   const columns = loadCrmColumns();
-  const stageConfig: Record<string, FunnelStageConfig> = {};
-  columns.forEach((c, i) => {
-    stageConfig[c.id] = { weight: defaultWeight(i, columns.length) };
-  });
+  return columns.map((c, i) => ({
+    id: c.id,
+    title: c.title,
+    color: c.color,
+    weight: defaultWeight(i, columns.length),
+  }));
+}
+
+export function newFunnel(name: string, stages?: PipelineStage[]): SalesFunnel {
+  const now = new Date().toISOString();
+  const ownStages = stages && stages.length ? stages : stagesFromCrmColumns();
   return {
     id: uid(),
     name,
@@ -306,14 +371,9 @@ export function newFunnel(name: string): SalesFunnel {
     syncCrm: true,
     channelId: 'ALL',
     periodDays: 0,
-    stageConfig,
-    webhook: { stageId: columns[0]?.id || null },
-    deals: {},
-    pipelines: [
-      { id: 'crm', name: 'Pipeline Principal', crmSync: true, stages: [], webhookStageId: columns[0]?.id || null },
-    ],
-    activePipelineId: 'crm',
-    localDeals: [],
+    stages: ownStages,
+    stageConfig: {},
+    webhook: { stageId: ownStages[0]?.id || null },
     sources: defaultSources(),
     automations: [],
     integrations: defaultIntegrations(),
@@ -322,7 +382,33 @@ export function newFunnel(name: string): SalesFunnel {
   };
 }
 
-/** Migra o modelo v1 (stages próprios) para v2 (etapas = colunas do CRM). */
+/** Pipeline do CRM: cards das conversas e etapas do funil vinculado. */
+export function newCrmPipeline(funnel: SalesFunnel): Pipeline {
+  return {
+    id: uid(),
+    name: 'Pipeline Principal',
+    crmSync: true,
+    stages: [],
+    webhookStageId: funnel.stages[0]?.id || null,
+    funnelId: funnel.id,
+  };
+}
+
+export function emptyWorkspace(): SalesWorkspace {
+  return {
+    version: 3,
+    funnels: [],
+    activeFunnelId: '',
+    pipelines: [],
+    activePipelineId: '',
+    deals: {},
+    localDeals: [],
+  };
+}
+
+/* ─── Snapshot v2, migrações e documento v3 ──────────────────── */
+
+/** Formato v1: lista de funis, cada um com etapas próprias. */
 interface LegacyFunnel {
   id?: string;
   name?: string;
@@ -337,82 +423,225 @@ interface LegacyFunnel {
   createdAt?: string;
 }
 
-function migrateV1(raw: LegacyFunnel): SalesFunnel {
-  const columns = loadCrmColumns();
-  const base = newFunnel(raw?.name || 'Meu Funil');
-  const stageConfig: Record<string, FunnelStageConfig> = {};
-  const idMap: Record<string, string> = {};
-  const oldStages = Array.isArray(raw?.stages) ? raw.stages : [];
+/**
+ * Formato v2 (um funil só, com pipelines e negociações dentro dele).
+ * É também o que a migração da v1 produz, para existir um caminho único até a v3.
+ */
+export type FunnelSnapshot = Partial<SalesFunnel> & {
+  pipelines?: Pipeline[];
+  activePipelineId?: string;
+  deals?: Record<string, FunnelDeal>;
+  localDeals?: LocalDeal[];
+};
 
-  oldStages.forEach((s, i) => {
-    const col = columns[i];
-    if (!col) return;
-    idMap[s.id] = col.id;
-    stageConfig[col.id] = { weight: s.weight ?? defaultWeight(i, columns.length) };
-  });
-  columns.forEach((c, i) => {
-    if (!stageConfig[c.id]) stageConfig[c.id] = { weight: defaultWeight(i, columns.length) };
+/**
+ * Migra o v1 para o snapshot v2: os ids das etapas antigas são remapeados para
+ * as colunas do CRM, então as automações continuam apontando para etapas reais.
+ */
+export function migrateV1(raw: LegacyFunnel): FunnelSnapshot {
+  const columns = loadCrmColumns();
+  const oldStages = Array.isArray(raw?.stages) ? raw.stages : [];
+  const idMap: Record<string, string> = {};
+  const stages: PipelineStage[] = columns.map((c, i) => {
+    const old = oldStages[i];
+    if (old) idMap[old.id] = c.id;
+    return {
+      id: c.id,
+      title: c.title,
+      color: c.color,
+      weight: old?.weight ?? defaultWeight(i, columns.length),
+    };
   });
 
   return {
-    ...base,
-    id: raw?.id || base.id,
-    name: raw?.name || base.name,
+    id: raw?.id,
+    name: raw?.name || 'Meu Funil',
     description: raw?.description || '',
-    chartStyle: raw?.chartStyle || 'cone',
+    chartStyle: resolveChartStyle(raw?.chartStyle),
     showNumbers: raw?.showNumbers ?? true,
     syncCrm: raw?.syncCrm ?? true,
-    stageConfig,
-    sources: Array.isArray(raw?.sources) && raw.sources.length ? raw.sources : base.sources,
-    integrations: Array.isArray(raw?.integrations) && raw.integrations.length ? raw.integrations : base.integrations,
+    stages,
+    sources: Array.isArray(raw?.sources) && raw.sources.length ? raw.sources : defaultSources(),
+    integrations:
+      Array.isArray(raw?.integrations) && raw.integrations.length
+        ? raw.integrations
+        : defaultIntegrations(),
     automations: (Array.isArray(raw?.automations) ? raw.automations : [])
       .map((a) => ({ ...a, stageId: idMap[a.stageId] || columns[0]?.id }))
       .filter((a) => !!a.stageId),
-    createdAt: raw?.createdAt || base.createdAt,
-    updatedAt: new Date().toISOString(),
+    createdAt: raw?.createdAt,
   };
 }
 
-export function loadFunnel(): SalesFunnel | null {
+/** Converte um snapshot (v2 ou v1 migrado) no documento v3. */
+export function workspaceFromV2(raw: FunnelSnapshot): SalesWorkspace {
+  const stages =
+    Array.isArray(raw.stages) && raw.stages.length
+      ? raw.stages
+      : stagesFromCrmColumns().map((s) => ({
+          ...s,
+          weight: raw.stageConfig?.[s.id]?.weight ?? s.weight,
+        }));
+
+  const funnel: SalesFunnel = {
+    ...newFunnel(raw.name || 'Meu Funil', stages),
+    id: raw.id || uid(),
+    name: raw.name || 'Meu Funil',
+    description: raw.description || '',
+    chartStyle: resolveChartStyle(raw.chartStyle),
+    showNumbers: raw.showNumbers ?? true,
+    syncCrm: raw.syncCrm ?? true,
+    channelId: raw.channelId || 'ALL',
+    periodDays: raw.periodDays ?? 0,
+    stages,
+    stageConfig: raw.stageConfig || {},
+    webhook: raw.webhook || { stageId: stages[0]?.id || null },
+    sources: raw.sources?.length ? raw.sources : defaultSources(),
+    integrations: raw.integrations?.length ? raw.integrations : defaultIntegrations(),
+    automations: Array.isArray(raw.automations) ? raw.automations : [],
+    createdAt: raw.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const rawPipelines =
+    Array.isArray(raw.pipelines) && raw.pipelines.length
+      ? raw.pipelines
+      : [newCrmPipeline(funnel)];
+
+  // O pipeline do CRM passa a seguir o funil (as etapas são as mesmas colunas,
+  // então nada muda na tela). Pipelines locais mantêm as etapas próprias e
+  // ficam sem vínculo: vincular é escolha de quem usa.
+  const pipelines: Pipeline[] = rawPipelines.map((p) => ({
+    ...p,
+    stages: Array.isArray(p.stages) ? p.stages : [],
+    funnelId: p.crmSync ? funnel.id : null,
+  }));
+
+  return {
+    version: 3,
+    funnels: [funnel],
+    activeFunnelId: funnel.id,
+    pipelines,
+    activePipelineId: raw.activePipelineId || pipelines[0].id,
+    deals: raw.deals || {},
+    localDeals: Array.isArray(raw.localDeals) ? raw.localDeals : [],
+  };
+}
+
+/** Completa campos que podem faltar em um funil salvo por uma versão anterior. */
+function normalizeFunnel(raw: Partial<SalesFunnel>): SalesFunnel {
+  const stages =
+    Array.isArray(raw.stages) && raw.stages.length ? raw.stages : stagesFromCrmColumns();
+  return {
+    ...newFunnel(raw.name || 'Meu Funil', stages),
+    ...raw,
+    stages,
+    chartStyle: resolveChartStyle(raw.chartStyle),
+    stageConfig: raw.stageConfig || {},
+    webhook: raw.webhook || { stageId: stages[0]?.id || null },
+    sources: raw.sources?.length ? raw.sources : defaultSources(),
+    integrations: raw.integrations?.length ? raw.integrations : defaultIntegrations(),
+    automations: Array.isArray(raw.automations) ? raw.automations : [],
+  } as SalesFunnel;
+}
+
+/** Valida e completa o documento lido do banco ou do cache local. */
+export function normalizeWorkspace(raw: unknown): SalesWorkspace | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const ws = raw as Partial<SalesWorkspace>;
+
+  const funnels = (Array.isArray(ws.funnels) ? ws.funnels : [])
+    .filter((f) => !!f && typeof f === 'object')
+    .map((f) => normalizeFunnel(f as Partial<SalesFunnel>));
+  if (!funnels.length) return null;
+
+  const pipelines = (Array.isArray(ws.pipelines) ? ws.pipelines : [])
+    .filter((p): p is Pipeline => !!p && typeof p === 'object' && !!p.id)
+    .map((p) => ({
+      ...p,
+      stages: Array.isArray(p.stages) ? p.stages : [],
+      funnelId: p.funnelId ?? null,
+    }));
+  const list = pipelines.length ? pipelines : [newCrmPipeline(funnels[0])];
+
+  const activeFunnelId = funnels.some((f) => f.id === ws.activeFunnelId)
+    ? (ws.activeFunnelId as string)
+    : funnels[0].id;
+
+  return {
+    version: 3,
+    funnels,
+    activeFunnelId,
+    pipelines: list,
+    activePipelineId: list.some((p) => p.id === ws.activePipelineId)
+      ? (ws.activePipelineId as string)
+      : list[0].id,
+    deals:
+      ws.deals && typeof ws.deals === 'object'
+        ? (ws.deals as Record<string, FunnelDeal>)
+        : {},
+    localDeals: Array.isArray(ws.localDeals) ? ws.localDeals : [],
+  };
+}
+
+/**
+ * Depois que o documento v3 existe, as chaves antigas só confundiriam numa
+ * eventual releitura — o banco é a fonte de verdade.
+ */
+function dropLegacyKeys() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch {
+    // storage indisponível — nada a limpar
+  }
+}
+
+/**
+ * Documento do cache local, já migrado de v2/v1 quando necessário.
+ * O banco é a fonte de verdade; o cache existe para a tela abrir sem esperar.
+ */
+export function loadWorkspace(): SalesWorkspace | null {
+  try {
+    const raw = localStorage.getItem(WORKSPACE_STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.id) {
-        // preenche campos novos que possam faltar em funis salvos antes do v2.2
-        parsed.deals = parsed.deals || {};
-        parsed.stageConfig = parsed.stageConfig || {};
-        parsed.webhook = parsed.webhook || { stageId: null };
-        if (!Array.isArray(parsed.pipelines) || !parsed.pipelines.length) {
-          parsed.pipelines = [
-            { id: 'crm', name: 'Pipeline Principal', crmSync: true, stages: [], webhookStageId: parsed.webhook?.stageId || null },
-          ];
-        }
-        parsed.activePipelineId =
-          parsed.activePipelineId || parsed.pipelines[0]?.id || 'crm';
-        parsed.localDeals = Array.isArray(parsed.localDeals) ? parsed.localDeals : [];
-        return parsed as SalesFunnel;
+      const parsed = normalizeWorkspace(JSON.parse(raw));
+      if (parsed) {
+        dropLegacyKeys();
+        return parsed;
       }
     }
-    // migração v1 → v2 (pega o primeiro funil criado)
-    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (legacy) {
-      const arr = JSON.parse(legacy);
+
+    const v2 = localStorage.getItem(STORAGE_KEY);
+    if (v2) {
+      const parsed = JSON.parse(v2);
+      if (parsed && typeof parsed === 'object' && parsed.id) {
+        const migrated = workspaceFromV2(parsed);
+        saveWorkspace(migrated);
+        dropLegacyKeys();
+        return migrated;
+      }
+    }
+
+    const v1 = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (v1) {
+      const arr = JSON.parse(v1);
       if (Array.isArray(arr) && arr.length > 0) {
-        const migrated = migrateV1(arr[0]);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        const migrated = workspaceFromV2(migrateV1(arr[0]));
+        saveWorkspace(migrated);
+        dropLegacyKeys();
         return migrated;
       }
     }
   } catch {
-    // ignora
+    // cache corrompido — segue vazio e o banco decide
   }
   return null;
 }
 
-export function saveFunnel(funnel: SalesFunnel) {
+export function saveWorkspace(workspace: SalesWorkspace) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(funnel));
+    localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(workspace));
   } catch {
     // storage indisponível — mantém apenas em memória
   }

@@ -111,7 +111,13 @@ export function AutomationsPanel({
                   {TRIGGER_LABELS[a.trigger]}
                   {a.days ? ` (${a.days}d)` : ''} → {ACTION_LABELS[a.action]}
                 </p>
-                {a.config && <p className="text-xs text-muted-foreground truncate">{a.config}</p>}
+                {a.config && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {a.action === 'advance_stage'
+                      ? `Destino: ${columns.find((c) => c.id === a.config)?.title ?? a.config}`
+                      : a.config}
+                  </p>
+                )}
               </div>
               <Button
                 variant="outline"
@@ -173,7 +179,9 @@ function AutomationDialog({
   const [active, setActive] = useState(existing?.active ?? true);
 
   const needsDays = trigger === 'after_days' || trigger === 'no_response_days';
+  // advance_stage usa o config para a etapa de destino (vazio = próxima etapa).
   const needsConfig = ACTION_CONFIG_PLACEHOLDER[action] !== '';
+  const picksTargetStage = action === 'advance_stage';
 
   const submit = () =>
     onSave({
@@ -182,7 +190,7 @@ function AutomationDialog({
       trigger,
       days: needsDays ? days : undefined,
       action,
-      config: needsConfig ? config : undefined,
+      config: needsConfig || picksTargetStage ? config || undefined : undefined,
       active,
     });
 
@@ -255,6 +263,30 @@ function AutomationDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {picksTargetStage && (
+            <div className="space-y-2">
+              <Label>Etapa de destino</Label>
+              <Select
+                value={config || '__next__'}
+                onValueChange={(v) => setConfig(v === '__next__' ? '' : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__next__">Próxima etapa do funil</SelectItem>
+                  {columns
+                    .filter((c) => c.id !== stageId)
+                    .map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {needsConfig && (
             <div className="space-y-2">

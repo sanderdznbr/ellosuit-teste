@@ -93,14 +93,14 @@ export function LeadModal({
   onOpenCRM: () => void;
 }) {
   const { toast } = useToast();
-  const { funnel, rows, stages, isCrmPipeline, companyId } = data;
+  const { funnel, rows, stages, isCrmPipeline, companyId, deals, localDeals } = data;
   const { members } = useTeamMembers(companyId);
 
   const crmLead = target.kind === 'crm' ? rows.find((r) => r.id === target.id) : null;
   const localLead =
-    target.kind === 'local' ? (funnel?.localDeals || []).find((d) => d.id === target.id) : null;
+    target.kind === 'local' ? localDeals.find((d) => d.id === target.id) : null;
   const deal: Partial<FunnelDeal & LocalDeal> =
-    target.kind === 'crm' ? funnel?.deals?.[target.id] || {} : localLead || {};
+    target.kind === 'crm' ? deals[target.id] || {} : localLead || {};
 
   const name =
     target.kind === 'crm'

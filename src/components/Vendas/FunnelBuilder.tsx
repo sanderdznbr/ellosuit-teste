@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { STAGE_PALETTE, defaultWeight, uid, type PipelineColumn } from './types';
@@ -33,6 +33,10 @@ export interface FunnelBuilderProps {
   counts?: Record<string, number>;
   minStages?: number;
   maxStages?: number;
+  /** Quantidade de automações por id de etapa (exibida como selo no card). */
+  automationCounts?: Record<string, number>;
+  /** Abre o chat de automação da etapa. Sem isto, o botão não aparece. */
+  onAutomate?: (stageId: string) => void;
 }
 
 interface RowProps {
@@ -42,10 +46,12 @@ interface RowProps {
   count?: number;
   canRemove: boolean;
   canInsert: boolean;
+  automations: number;
   onRename: (id: string, title: string) => void;
   onColor: (id: string, color: string) => void;
   onRemove: (id: string) => void;
   onInsertAfter: (id: string) => void;
+  onAutomate?: (id: string) => void;
 }
 
 function SortableStageRow({
@@ -55,10 +61,12 @@ function SortableStageRow({
   count,
   canRemove,
   canInsert,
+  automations,
   onRename,
   onColor,
   onRemove,
   onInsertAfter,
+  onAutomate,
 }: RowProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: stage.id });
@@ -143,6 +151,23 @@ function SortableStageRow({
           <Plus className="h-3.5 w-3.5" />
         </button>
 
+        {onAutomate && (
+          <button
+            type="button"
+            onClick={() => onAutomate(stage.id)}
+            className="relative shrink-0 rounded-md p-1 text-muted-foreground/60 transition-colors hover:bg-primary/10 hover:text-primary"
+            title="Automatizar esta etapa com IA"
+            aria-label={`Automatizar a etapa ${stage.title || index + 1}`}
+          >
+            <Zap className="h-3.5 w-3.5" />
+            {automations > 0 && (
+              <span className="absolute -right-1 -top-1 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-primary-foreground">
+                {automations}
+              </span>
+            )}
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => onRemove(stage.id)}
@@ -169,6 +194,8 @@ export function FunnelBuilder({
   counts = {},
   minStages = MIN_STAGES,
   maxStages = MAX_STAGES,
+  automationCounts = {},
+  onAutomate,
 }: FunnelBuilderProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -237,10 +264,12 @@ export function FunnelBuilder({
                   count={counts[stage.id]}
                   canRemove={canRemove}
                   canInsert={canInsert}
+                  automations={automationCounts[stage.id] ?? 0}
                   onRename={rename}
                   onColor={setColor}
                   onRemove={remove}
                   onInsertAfter={insertAfter}
+                  onAutomate={onAutomate}
                 />
               ))}
             </ul>
