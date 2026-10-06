@@ -16,10 +16,14 @@ export const HIDDEN_PATHS: ReadonlySet<string> = new Set([
   // 🔴 Captura de Leads / Funis
   "/dashboard/leads",
 
-  // 🔴 Rastreamento de PDF / Vídeo / Conteúdo (mantém encurtador e email-tracker)
+  // 🔴 Rastreamento de PDF / Vídeo / Conteúdo (mantém encurtador)
   "/dashboard/rastreamento",
   "/dashboard/rastreamento-documento",
   "/dashboard/rastreamento-video",
+
+  // 🔴 Rastrear Emails (oculto por enquanto — a página continua existindo,
+  // basta remover a linha abaixo para o item voltar ao menu)
+  "/dashboard/email-tracker",
 
   // 🔴 Hábitos / Rotinas
   "/dashboard/habitos",

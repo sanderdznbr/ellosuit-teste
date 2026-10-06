@@ -23,6 +23,7 @@ null
 # Ferramentas locais
 .freebuff
 .lovable
+supabase/.temp
 
 # Editor directories and files
 .vscode/*

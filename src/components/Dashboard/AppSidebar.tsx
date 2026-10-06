@@ -34,12 +34,28 @@ const navGroups: NavGroup[] = [
     id: "conversas", label: "Conversas", icon: MessageSquare, hubPath: "/dashboard/crm-ello",
     items: [
       { label: "CRM WhatsApp", path: "/dashboard/crm-ello", icon: WhatsAppIcon },
-      { label: "Disparos em Massa", path: "/dashboard/disparos", icon: Megaphone },
-      { label: "ChatBot Builder", path: "/dashboard/chatbot", icon: GitBranch },
-      { label: "Chatbot IA Creator", path: "/dashboard/criar-chatbot", icon: Bot },
-      { label: "Agentes de IA", path: "/dashboard/bot-ia", icon: Bot },
-      { label: "Email Marketing", path: "/dashboard/email", icon: Mail },
+      // Oculto por feature flag (`/dashboard/email-tracker` em HIDDEN_PATHS).
       { label: "Rastrear Emails", path: "/dashboard/email-tracker", icon: Eye },
+    ],
+  },
+  {
+    id: "disparos", label: "Disparos", icon: Megaphone, hubPath: "/dashboard/disparos",
+    items: [
+      { label: "Disparos em Massa", path: "/dashboard/disparos", icon: Megaphone },
+      { label: "Email Marketing", path: "/dashboard/email", icon: Mail },
+    ],
+  },
+  {
+    id: "construtores", label: "Construtores", icon: Brain, hubPath: "/dashboard/chatbot",
+    items: [
+      { label: "Chatbot IA Creator", path: "/dashboard/criar-chatbot", icon: Bot },
+      { label: "ChatBot Builder", path: "/dashboard/chatbot", icon: GitBranch },
+      { label: "Agentes de IA", path: "/dashboard/bot-ia", icon: Bot },
+    ],
+  },
+  {
+    id: "desenvolvedores", label: "Desenvolvedores", icon: Webhook, hubPath: "/dashboard/api-whatsapp",
+    items: [
       { label: "API WhatsApp", path: "/dashboard/api-whatsapp", icon: Key },
     ],
   },

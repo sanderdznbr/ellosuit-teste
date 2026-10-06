@@ -75,12 +75,31 @@ const rawHubs: SliderHub[] = [
     color: '#374DA4',
     items: [
       { label: 'CRM WhatsApp', icon: WhatsAppIcon, path: '/dashboard/crm-ello' },
-      { label: 'Disparos em Massa', icon: Megaphone, path: '/dashboard/disparos' },
-      { label: 'ChatBot Builder', icon: GitBranch, path: '/dashboard/chatbot' },
-      { label: 'Chatbot IA Creator', icon: Bot, path: '/dashboard/criar-chatbot' },
-      { label: 'Agentes de IA', icon: Bot, path: '/dashboard/bot-ia' },
-      { label: 'Email Marketing', icon: Mail, path: '/dashboard/email' },
+      // Oculto por feature flag ('/dashboard/email-tracker' em HIDDEN_PATHS).
       { label: 'Rastrear Emails', icon: Eye, path: '/dashboard/email-tracker' },
+    ],
+  },
+  {
+    name: 'Disparos',
+    color: '#374DA4',
+    items: [
+      { label: 'Disparos em Massa', icon: Megaphone, path: '/dashboard/disparos' },
+      { label: 'Email Marketing', icon: Mail, path: '/dashboard/email' },
+    ],
+  },
+  {
+    name: 'Construtores',
+    color: '#374DA4',
+    items: [
+      { label: 'Chatbot IA Creator', icon: Bot, path: '/dashboard/criar-chatbot' },
+      { label: 'ChatBot Builder', icon: GitBranch, path: '/dashboard/chatbot' },
+      { label: 'Agentes de IA', icon: Bot, path: '/dashboard/bot-ia' },
+    ],
+  },
+  {
+    name: 'Desenvolvedores',
+    color: '#374DA4',
+    items: [
       { label: 'API WhatsApp', icon: Key, path: '/dashboard/api-whatsapp' },
     ],
   },
