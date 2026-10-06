@@ -1,6 +1,8 @@
 // Shared logic for the public "post approval" flow (API -> WhatsApp client -> webhook back).
 // deno-lint-ignore-file no-explicit-any
 
+import { OPENAI_FALLBACK_MODEL, assistantText, chatCompletion } from './llm.ts';
+
 export type Decision = 'approve' | 'reject' | 'new_version' | 'cancel' | 'unclear';
 
 const GRAPH = 'https://graph.facebook.com/v21.0';
@@ -163,32 +165,28 @@ export function quickClassify(text: string, stage: string): Decision {
   return 'unclear';
 }
 
-/** AI fallback for free-text replies. Streams the Responses API (required for gateway calls). */
+/**
+ * AI fallback for free-text replies.
+ *
+ * Antes usava o /v1/responses do gateway Lovable com streaming SSE; o streaming
+ * so era exigido pelo gateway. Com a API da OpenAI basta um chat completion com
+ * saida em JSON, entao a leitura de SSE saiu daqui.
+ */
 export async function aiClassify(text: string, stage: string): Promise<{ decision: Decision; notes: string }> {
-  const key = Deno.env.get('LOVABLE_API_KEY');
-  if (!key) return { decision: 'unclear', notes: '' };
+  if (!Deno.env.get('OPENAI_API_KEY')) return { decision: 'unclear', notes: '' };
   const options = stage === 'awaiting_decision' ? 'new_version | cancel | unclear' : 'approve | reject | new_version | unclear';
   const prompt = `Um cliente recebeu um post de rede social para aprovar. Classifique a resposta dele.\nOpções: ${options}.\n- approve: aprovou.\n- reject: recusou sem dizer o que fazer.\n- new_version: quer outra versão/mudança (extraia o que mudar).\n- cancel: quer cancelar.\nResponda SOMENTE JSON: {"decision":"...","notes":"o que o cliente pediu para mudar, ou vazio"}\n\nResposta do cliente: """${text.slice(0, 1500)}"""`;
   try {
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/responses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Lovable-API-Key': key, 'X-Lovable-AIG-SDK': 'fetch' },
-      body: JSON.stringify({ model: 'openai/gpt-6-astra', input: prompt, stream: true, store: false, reasoning: { effort: 'low' } }),
+    const res = await chatCompletion({
+      model: OPENAI_FALLBACK_MODEL,
+      messages: [
+        { role: 'system', content: 'Voce classifica a resposta de um cliente sobre um post de rede social. Responda SOMENTE JSON.' },
+        { role: 'user', content: prompt },
+      ],
+      response_format: { type: 'json_object' },
     });
-    if (!res.ok || !res.body) { console.warn('[post-approval] AI status', res.status); return { decision: 'unclear', notes: '' }; }
-    const reader = res.body.getReader(); const dec = new TextDecoder();
-    let buf = ''; let out = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n'); buf = lines.pop() || '';
-      for (const l of lines) {
-        if (!l.startsWith('data:')) continue;
-        const raw = l.slice(5).trim(); if (!raw || raw === '[DONE]') continue;
-        try { const ev = JSON.parse(raw); if (ev.type === 'response.output_text.delta') out += ev.delta || ''; } catch { /* ignore */ }
-      }
-    }
+    if (!res.ok) { console.warn('[post-approval] AI status', res.status); return { decision: 'unclear', notes: '' }; }
+    const out = await assistantText(res);
     const m = out.match(/\{[\s\S]*\}/);
     const j = m ? JSON.parse(m[0]) : {};
     const d = ['approve', 'reject', 'new_version', 'cancel'].includes(j.decision) ? j.decision : 'unclear';

@@ -10,13 +10,14 @@ const corsHeaders = {
 
 function gateway(key: string) {
   return createOpenAICompatible({
-    name: 'lovable',
-    baseURL: 'https://ai.gateway.lovable.dev/v1',
-    headers: { 'Lovable-API-Key': key },
+    name: 'openai',
+    baseURL: 'https://api.openai.com/v1',
+    headers: { Authorization: `Bearer ${key}` },
   });
 }
 
-const MODEL = 'google/gemini-2.5-flash';
+// O agente usa tool calling, entao fica no modelo forte em vez do mini.
+const MODEL = 'gpt-4o';
 const UA = 'Mozilla/5.0 (compatible; EllosuitBrainAgent/1.0)';
 
 /* ---------------- scraping helpers (Scrapling-style: fetch + limpeza) --------------- */
@@ -356,9 +357,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const key = Deno.env.get('LOVABLE_API_KEY');
+    const key = Deno.env.get('OPENAI_API_KEY');
     if (!key) {
-      return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY não configurada' }), {
+      return new Response(JSON.stringify({ error: 'OPENAI_API_KEY não configurada' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
