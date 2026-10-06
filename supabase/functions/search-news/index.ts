@@ -1,3 +1,4 @@
+import { generateImage } from '../_shared/llm.ts';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -203,32 +204,16 @@ CRITICAL for image_search_terms: Each term MUST be in ENGLISH and describe a spe
 
     // Strategy 2: Generate images with AI if search found too few
     if (images.length < 2) {
-      const lovableKey = Deno.env.get('LOVABLE_API_KEY');
-      if (lovableKey) {
+      if (Deno.env.get('OPENAI_API_KEY')) {
         console.log('[IMAGES] Generating AI images for topic:', cleanTopic);
         try {
           for (const term of searchTerms.slice(0, 3)) {
             if (images.length >= 4) break;
             const aiPrompt = `Create a high-quality, photorealistic image of: ${term}. Make it visually stunning and suitable for a social media carousel post. No text or watermarks.`;
-            const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${lovableKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'google/gemini-2.5-flash-image',
-                messages: [{ role: 'user', content: aiPrompt }],
-                modalities: ['image', 'text'],
-              }),
-            });
-            if (aiRes.ok) {
-              const aiData = await aiRes.json();
-              const aiImage = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-              if (aiImage) {
-                images.push(aiImage);
-                console.log('[IMAGES] AI generated image successfully');
-              }
+            const aiImage = await generateImage({ prompt: aiPrompt });
+            if (aiImage) {
+              images.push(aiImage);
+              console.log('[IMAGES] AI generated image successfully');
             }
           }
         } catch (e) {

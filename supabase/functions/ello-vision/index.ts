@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { chatCompletion } from '../_shared/llm.ts';
+import { chatCompletion, mapModel } from '../_shared/llm.ts';
 
 async function logUsage(params: { service_type: string; action: string; model?: string; input_tokens?: number; output_tokens?: number; total_cost: number; metadata?: Record<string, any> }) {
   try {
@@ -333,9 +333,9 @@ REGRAS:
     const usage = aiData.usage || {};
     const inputTokens = usage.prompt_tokens || 0;
     const outputTokens = usage.completion_tokens || 0;
-    const cost = (inputTokens / 1000) * 0.00015 + (outputTokens / 1000) * 0.0006;
+    const cost = ((inputTokens / 1000) * 0.00015 + (outputTokens / 1000) * 0.0006);
     logUsage({
-      service_type: 'lovable_ai', action: 'ello_vision_analysis', model: 'google/gemini-3-flash-preview',
+      service_type: 'openai', action: 'ello_vision_analysis', model: mapModel('google/gemini-3-flash-preview'),
       input_tokens: inputTokens, output_tokens: outputTokens, total_cost: cost,
       metadata: { data_summary_length: dataSummary.length },
     });

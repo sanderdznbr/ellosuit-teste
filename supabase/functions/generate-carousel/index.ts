@@ -1,3 +1,5 @@
+import { chatCompletion } from '../_shared/llm.ts';
+import { chatCompletion, generateImage } from '../_shared/llm.ts';
 // Edge function for carousel generation
 
 const corsHeaders = {
@@ -12,7 +14,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, topic, keywords, cardCount, prompt, imageSize, query, referenceImageUrls, faceReferenceUrls, styleReferenceUrls, username, imageModel, negativePrompt, fidelity } = body;
+    const { action, topic, keywords, cardCount, prompt, imageSize, query, referenceImageUrls, faceReferenceUrls, styleReferenceUrls, username, negativePrompt, fidelity } = body;
 
     // ===== INSTAGRAM PROFILE FETCH =====
     if (action === 'instagram-profile') {
@@ -204,9 +206,9 @@ Deno.serve(async (req) => {
 
     // ===== ANALYZE PRODUCT =====
     if (action === 'analyze-product') {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) {
+        return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -218,13 +220,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const analyzeResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const analyzeResponse = await chatCompletion({
           model: 'google/gemini-3-flash-preview',
           messages: [
             { role: 'system', content: `You are a product image analyzer. Analyze the image and identify the product type and describe it.
@@ -245,8 +241,7 @@ Respond ONLY with the JSON object, no markdown or explanation.` },
               { type: 'image_url', image_url: { url: imageUrl } },
             ] },
           ],
-        }),
-      });
+        });
 
       if (!analyzeResponse.ok) {
         console.error('Product analysis error:', analyzeResponse.status);
@@ -277,20 +272,14 @@ Respond ONLY with the JSON object, no markdown or explanation.` },
 
     // ===== ENHANCE PROMPT =====
     if (action === 'enhance-prompt') {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) {
+        return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      const enhanceResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const enhanceResponse = await chatCompletion({
           model: 'google/gemini-3-flash-preview',
           messages: [
             { role: 'system', content: `Você é um especialista em criação de conteúdo editorial para Instagram. Receba um tópico simples e transforme em um prompt OTIMIZADO e DETALHADO para gerar um carrossel profissional.
@@ -305,8 +294,7 @@ REGRAS:
 - Em português brasileiro` },
             { role: 'user', content: `Tópico original: ${prompt || topic}` },
           ],
-        }),
-      });
+        });
 
       if (!enhanceResponse.ok) {
         const errText = await enhanceResponse.text();
@@ -326,9 +314,9 @@ REGRAS:
 
     // ===== GENERATE CONTENT =====
     if (action === 'generate-content') {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) {
+        return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -391,13 +379,7 @@ Responda APENAS em JSON válido:
   ]
 }`;
 
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await chatCompletion({
           model: 'google/gemini-3-flash-preview',
           messages: [
             { role: 'system', content: systemPrompt },
@@ -407,8 +389,7 @@ Responda APENAS em JSON válido:
               body.productContext ? `\n\nPRODUTO IDENTIFICADO:\n- Tipo: ${body.productContext.productType}\n- Descrição: ${body.productContext.productDescription}\n\nIMPORTANTE: O carrossel deve destacar este produto. Cada card de conteúdo deve mencionar ou contextualizar o produto. Os imagePrompts devem descrever cenas com o produto em destaque. Para roupas, descreva modelos vestindo a peça. Para objetos, descreva mockups e contextos de uso. Para alimentos, descreva composições food-styling.` : ''
             }` },
           ],
-        }),
-      });
+        });
 
       if (!response.ok) {
         const errText = await response.text();
@@ -452,9 +433,9 @@ Responda APENAS em JSON válido:
 
     // ===== GENERATE AI IMAGE (Lovable AI - Gemini) =====
     if (action === 'generate-ai-image') {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) {
+        return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -477,9 +458,6 @@ Responda APENAS em JSON válido:
         : [];
 
       console.log('Proxied refs:', { faces: validFaceRefs.length, styles: validStyleRefs.length, general: validGeneralRefs.length });
-
-      // Build message content with text + reference images
-      const messageContent: any[] = [];
 
       let textPrompt = `Generate a professional editorial magazine-quality image for an Instagram carousel post (4:5 portrait aspect ratio, 1080x1350px).
 
@@ -515,96 +493,52 @@ STYLE REQUIREMENTS:
         textPrompt += `\n\nBRAND/STYLE REFERENCE: I am attaching ${validStyleRefs.length} brand/style reference image(s). Match the visual style, color palette, and aesthetic of these references.`;
       }
 
-      messageContent.push({ type: 'text', text: textPrompt });
+      // Referências viram o upload do /v1/images/edits (rosto tem prioridade).
+      const allRefs = [...validFaceRefs, ...validStyleRefs, ...validGeneralRefs];
 
-      // Add face references FIRST (highest priority)
-      for (const ref of validFaceRefs) {
-        messageContent.push({ type: 'image_url', image_url: { url: ref } });
-      }
+      // A fidelidade alta só faz sentido quando existe foto de rosto para casar.
+      const inputFidelity = fidelity === 'high' && validFaceRefs.length > 0 ? 'high' : 'low';
+      console.log('Image gen refs:', allRefs.length, 'fidelity:', inputFidelity);
 
-      // Add style/brand references
-      for (const ref of validStyleRefs) {
-        messageContent.push({ type: 'image_url', image_url: { url: ref } });
-      }
-
-      // Add general references (only if no specific refs)
-      for (const ref of validGeneralRefs) {
-        messageContent.push({ type: 'image_url', image_url: { url: ref } });
-      }
-
-      // Determine primary model - 'auto' selects based on whether face refs exist
-      const resolvedModel = imageModel === 'auto' 
-        ? (hasFaceRefs ? 'nano-banana' : 'gemini') 
-        : imageModel;
-      const primaryModel = resolvedModel === 'nano-banana' ? 'google/gemini-3-pro-image-preview' : 'google/gemini-2.5-flash-image';
-      const fallbackModel = resolvedModel === 'nano-banana' ? 'google/gemini-2.5-flash-image' : 'google/gemini-3-pro-image-preview';
-      console.log('Image gen model:', primaryModel, 'parts:', messageContent.length);
-
-      async function tryGenerateImage(model: string, content: any[], attempt: number): Promise<string | null> {
-        console.log(`Attempt ${attempt} model=${model} parts=${content.length}`);
-        const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            messages: [{ role: 'user', content }],
-            modalities: ['image', 'text'],
-          }),
+      async function tryGenerateImage(promptText: string, refs: string[], attempt: number): Promise<string | null> {
+        console.log(`Attempt ${attempt} refs=${refs.length}`);
+        const img = await generateImage({
+          prompt: promptText,
+          references: refs,
+          size: '1024x1536',
+          inputFidelity: refs.length > 0 ? inputFidelity : undefined,
         });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error(`Attempt ${attempt} error:`, res.status, errText);
-          if (res.status === 429 || res.status === 402) throw { status: res.status };
-          return null;
-        }
-
-        const data = await res.json();
-        const img = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        if (!img) console.error(`Attempt ${attempt} no image`, data.choices?.[0]?.finish_reason);
-        return img || null;
+        if (!img) console.error(`Attempt ${attempt} no image`);
+        return img;
       }
 
       // Attempt 1: full prompt with all proxied references
       let generatedImage: string | null = null;
       try {
-        generatedImage = await tryGenerateImage(primaryModel, messageContent, 1);
-      } catch (e: any) {
-        if (e?.status === 429) {
-          return new Response(JSON.stringify({ error: 'Rate limit excedido. Tente novamente em alguns segundos.' }), {
-            status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        if (e?.status === 402) {
-          return new Response(JSON.stringify({ error: 'Créditos de IA esgotados.' }), {
-            status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
+        generatedImage = await tryGenerateImage(textPrompt, allRefs, 1);
+      } catch (e) {
+        console.error('[Image Gen] attempt 1 failed:', e);
       }
 
       // Attempt 2: simplified text, only style refs (face refs often trigger safety filters)
       if (!generatedImage) {
-        const retryContent: any[] = [
-          { type: 'text', text: `Create a stunning professional editorial photograph. Scene: ${imagePrompt}. Style: cinematic lighting, magazine quality, 4:5 portrait ratio, ultra high resolution.` },
-        ];
-        // Only add style refs (less likely to trigger safety filters than face refs)
-        for (const ref of validStyleRefs.slice(0, 2)) retryContent.push({ type: 'image_url', image_url: { url: ref } });
         try {
-          generatedImage = await tryGenerateImage(primaryModel, retryContent, 2);
+          generatedImage = await tryGenerateImage(
+            `Create a stunning professional editorial photograph. Scene: ${imagePrompt}. Style: cinematic lighting, magazine quality, 4:5 portrait ratio, ultra high resolution.`,
+            validStyleRefs.slice(0, 2),
+            2,
+          );
         } catch { /* try next */ }
       }
 
-      // Attempt 3: fallback model, NO references at all (clean generation)
+      // Attempt 3: NO references at all (clean generation)
       if (!generatedImage) {
-        const minimalContent = [{
-          type: 'text',
-          text: `Generate a beautiful professional photograph: ${imagePrompt}. Editorial magazine quality, cinematic lighting, rich colors, 4:5 portrait aspect ratio. Ultra high resolution.`
-        }];
         try {
-          generatedImage = await tryGenerateImage(fallbackModel, minimalContent, 3);
+          generatedImage = await tryGenerateImage(
+            `Generate a beautiful professional photograph: ${imagePrompt}. Editorial magazine quality, cinematic lighting, rich colors, 4:5 portrait aspect ratio. Ultra high resolution.`,
+            [],
+            3,
+          );
         } catch { /* try next */ }
       }
 
@@ -612,19 +546,19 @@ STYLE REQUIREMENTS:
       if (!generatedImage) {
         const keywords = imagePrompt.split(/[.,;:!?]/).filter(Boolean);
         const simpleDesc = keywords[0]?.trim() || 'professional business scene';
-        const simpleContent = [{
-          type: 'text',
-          text: `Beautiful professional stock photo: ${simpleDesc}. Clean, well-lit, magazine quality, 4:5 portrait format.`
-        }];
         try {
-          generatedImage = await tryGenerateImage('google/gemini-2.5-flash-image', simpleContent, 4);
+          generatedImage = await tryGenerateImage(
+            `Beautiful professional stock photo: ${simpleDesc}. Clean, well-lit, magazine quality, 4:5 portrait format.`,
+            [],
+            4,
+          );
         } catch { /* ignore */ }
       }
 
       // Attempt 5: absolute last resort - completely generic
       if (!generatedImage) {
         try {
-          generatedImage = await tryGenerateImage('google/gemini-2.5-flash-image', [{ type: 'text', text: 'Beautiful abstract gradient background in dark blue and orange tones, professional, clean, 4:5 portrait aspect ratio.' }], 5);
+          generatedImage = await tryGenerateImage('Beautiful abstract gradient background in dark blue and orange tones, professional, clean, 4:5 portrait aspect ratio.', [], 5);
         } catch { /* ignore */ }
       }
 
@@ -677,9 +611,9 @@ STYLE REQUIREMENTS:
 
     // ===== GENERATE CAPTION =====
     if (action === 'generate-caption') {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) {
+        return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -697,17 +631,13 @@ Regras:
 - Tom profissional mas acessível
 - Não use markdown, apenas texto simples`;
 
-      const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const aiRes = await chatCompletion({
           model: 'google/gemini-3-flash-preview',
           messages: [
             { role: 'system', content: 'Você é um especialista em social media e copywriting para Instagram.' },
             { role: 'user', content: captionPrompt },
           ],
-        }),
-      });
+        });
 
       if (!aiRes.ok) {
         const errText = await aiRes.text();

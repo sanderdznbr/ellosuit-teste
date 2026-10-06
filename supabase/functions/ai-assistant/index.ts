@@ -1,6 +1,6 @@
 // AI Assistant Orchestrator - Full platform assistant with tool calling
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chatCompletion } from '../_shared/llm.ts';
+import { OPENAI_IMAGE_MODEL, chatCompletion, generateImage, pdfFilePart } from '../_shared/llm.ts';
 
 async function logUsage(params: { service_type: string; action: string; model?: string; input_tokens?: number; output_tokens?: number; total_cost: number; user_id?: string; company_id?: string; metadata?: Record<string, any> }) {
   try {
@@ -2448,8 +2448,8 @@ async function executeTool(toolName: string, args: Record<string, unknown>, cont
 
     // ==================== GENERATE IMAGE ====================
     case 'generate_image': {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) return { result: 'Erro: LOVABLE_API_KEY não configurada.' };
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) return { result: 'Erro: OPENAI_API_KEY não configurada.' };
 
       const prompt = args.prompt as string;
       const style = (args.style as string) || 'social_post';
@@ -2505,8 +2505,6 @@ async function executeTool(toolName: string, args: Record<string, unknown>, cont
       }
 
       try {
-        const imageModel = 'google/gemini-3.1-flash-image-preview';
-        
         // Build message content - include reference images if provided
         const messageContent: any[] = [{ type: 'text', text: fullPrompt }];
         
@@ -2549,38 +2547,24 @@ async function executeTool(toolName: string, args: Record<string, unknown>, cont
         }
 
         const hasMedia = messageContent.length > 1;
+        const referenceUrls = messageContent
+          .filter((part: any) => part.type === 'image_url')
+          .map((part: any) => part.image_url.url);
 
-        console.log(`🚀 [Image Gen] Calling AI gateway with ${messageContent.length} parts (hasMedia=${hasMedia})`);
+        // A OpenAI só tem 1:1, 3:2 e 2:3 — o 2:3 é o mais próximo de cada formato.
+        const size = aspectRatio === '1:1' ? '1024x1024' : (style === 'banner' ? '1536x1024' : '1024x1536');
 
-        const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: imageModel,
-            messages: [{
-              role: 'user',
-              content: hasMedia ? messageContent : fullPrompt
-            }],
-            modalities: ['image', 'text'],
-          }),
+        console.log(`🚀 [Image Gen] Chamando OpenAI com ${referenceUrls.length} referencia(s) (hasMedia=${hasMedia}), size=${size}`);
+
+        const imageBase64 = await generateImage({
+          prompt: fullPrompt,
+          references: referenceUrls,
+          size: size as '1024x1024' | '1536x1024' | '1024x1536',
+          inputFidelity: referenceUrls.length > 0 ? 'high' : undefined,
         });
 
-        if (!aiRes.ok) {
-          const errText = await aiRes.text();
-          console.error('[Image Gen] AI error:', aiRes.status, errText);
-          if (aiRes.status === 429) return { result: 'Limite de requisições atingido. Tente novamente em alguns segundos.' };
-          if (aiRes.status === 402) return { result: 'Créditos insuficientes para gerar imagem.' };
-          return { result: `Erro ao gerar imagem: ${aiRes.status} - ${errText.substring(0, 200)}` };
-        }
-
-        const aiData = await aiRes.json();
-        const imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
         if (!imageBase64) {
-          console.error('[Image Gen] No image in response:', JSON.stringify(aiData).substring(0, 500));
+          console.error('[Image Gen] A OpenAI nao devolveu imagem');
           return { result: 'Não foi possível gerar a imagem. Tente reformular o pedido ou simplificar a descrição.' };
         }
 
@@ -2608,13 +2592,11 @@ async function executeTool(toolName: string, args: Record<string, unknown>, cont
         const { data: urlData } = sbClient.storage.from('brand-assets').getPublicUrl(genFileName);
         const publicUrl = urlData.publicUrl;
 
-        // Log usage
-        const usage = aiData.usage || {};
-        const cost = ((usage.prompt_tokens || 0) / 1000) * 0.0004 + ((usage.completion_tokens || 0) / 1000) * 0.0016;
+        // Log usage (a API de imagem da OpenAI nao devolve contagem de tokens)
         logUsage({
-          service_type: 'lovable_ai', action: 'image_generation', model: imageModel,
-          input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0,
-          total_cost: cost, user_id: userId, company_id: companyId,
+          service_type: 'openai', action: 'image_generation', model: OPENAI_IMAGE_MODEL,
+          input_tokens: 0, output_tokens: 0,
+          total_cost: 0.04, user_id: userId, company_id: companyId,
           metadata: { style, aspect_ratio: aspectRatio, has_references: refsToUse.length > 0, has_logo: !!logoUrl, has_brand_colors: brandColors.length > 0 },
         });
 
@@ -2888,8 +2870,8 @@ ${parties.slice(0, 2).map(p => `<div class="signature-box"><p><strong>${p.name}<
         return { result: `O arquivo "${fileName}" não é um PDF. Envie um documento PDF para análise visual.` };
       }
 
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) return { result: 'Erro: LOVABLE_API_KEY não configurada.' };
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) return { result: 'Erro: OPENAI_API_KEY não configurada.' };
 
       const focus = (args.focus as string) || 'both';
       const improveDesign = (args.improve_design as boolean) || false;
@@ -2961,31 +2943,22 @@ ${parties.slice(0, 2).map(p => `<div class="signature-box"><p><strong>${p.name}<
 
 Analise TODAS as páginas do PDF. Seja específico e construtivo.`;
 
-        console.log(`🤖 [PDF Analysis] Sending to Gemini for visual analysis...`);
+        console.log(`🤖 [PDF Analysis] Sending to OpenAI for visual analysis...`);
 
-        const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [{
-              role: 'user',
-              content: [
-                {
-                  type: 'image_url',
-                  image_url: { url: `data:application/pdf;base64,${pdfBase64}` }
-                },
-                {
-                  type: 'text',
-                  text: analysisPrompt
-                }
-              ]
-            }],
-            temperature: 0.4,
-          }),
+        const aiRes = await chatCompletion({
+          model: 'gpt-4o',
+          messages: [{
+            role: 'user',
+            content: [
+              // O Chat Completions da OpenAI lê PDF como parte do tipo "file".
+              pdfFilePart(pdfBase64, fileName),
+              {
+                type: 'text',
+                text: analysisPrompt
+              }
+            ]
+          }],
+          temperature: 0.4,
         });
 
         if (!aiRes.ok) {
@@ -3001,9 +2974,9 @@ Analise TODAS as páginas do PDF. Seja específico e construtivo.`;
 
         // Log usage
         const usage = aiData.usage || {};
-        const cost = ((usage.prompt_tokens || 0) / 1000) * 0.00015 + ((usage.completion_tokens || 0) / 1000) * 0.0006;
+        const cost = ((usage.prompt_tokens || 0) / 1000) * 0.0025 + ((usage.completion_tokens || 0) / 1000) * 0.01;
         logUsage({
-          service_type: 'lovable_ai', action: 'pdf_visual_analysis', model: 'google/gemini-2.5-flash',
+          service_type: 'openai', action: 'pdf_visual_analysis', model: 'gpt-4o',
           input_tokens: usage.prompt_tokens || 0, output_tokens: usage.completion_tokens || 0,
           total_cost: cost, user_id: userId, company_id: companyId,
           metadata: { focus, improve_design: improveDesign, file_name: fileName },
@@ -3586,7 +3559,7 @@ Data de hoje: ${isoToday}. Empresa: ${companyData?.name || 'N/A'}.`,
       const u = data.usage || {};
       totalCost += ((u.prompt_tokens || 0) / 1000) * 0.00015 + ((u.completion_tokens || 0) / 1000) * 0.0006;
       logUsage({
-        service_type: 'lovable_ai', action: `ai_assistant_step_${step + 1}`,
+        service_type: 'openai', action: `ai_assistant_step_${step + 1}`,
         model: usePlanner ? MODEL_PLANNER : MODEL_EXEC,
         input_tokens: u.prompt_tokens || 0, output_tokens: u.completion_tokens || 0,
         total_cost: totalCost, user_id: userId, company_id: companyId,

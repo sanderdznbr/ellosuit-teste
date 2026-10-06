@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { generateImage } from '../_shared/llm.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,11 +47,11 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
 
     const { contact_name, contact_phone, contact_id, force_regenerate, force_gender } = await req.json();
     if (!contact_id) throw new Error('contact_id is required');
@@ -107,30 +108,10 @@ serve(async (req) => {
 
     console.log(`[Avatar] Generating for "${contact_name}" (${gender}) - ${contact_id}`);
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
-        messages: [{ role: 'user', content: prompt }],
-        modalities: ['image', 'text'],
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error('[Avatar] AI generation failed:', aiResponse.status, errText);
-      throw new Error(`AI generation failed: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const imageBase64 = await generateImage({ prompt, size: '1024x1024' });
 
     if (!imageBase64) {
-      console.error('[Avatar] No image in response');
+      console.error('[Avatar] A OpenAI nao devolveu imagem');
       throw new Error('No image generated');
     }
 

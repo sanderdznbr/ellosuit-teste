@@ -1,6 +1,6 @@
 // Ellosuit WhatsApp Agent - AI agent with tool calling for ALL platform operations
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { chatCompletion } from '../_shared/llm.ts';
+import { chatCompletion, mapModel } from '../_shared/llm.ts';
 
 async function logUsage(params: { service_type: string; action: string; model?: string; input_tokens?: number; output_tokens?: number; total_cost: number; user_id?: string; company_id?: string; metadata?: Record<string, any> }) {
   try {
@@ -1312,7 +1312,7 @@ Deno.serve(async (req) => {
     const model = (settings.model as string) || 'google/gemini-3-flash-preview';
     const cost1 = ((u1.prompt_tokens || 0) / 1000) * 0.00015 + ((u1.completion_tokens || 0) / 1000) * 0.0006;
     logUsage({
-      service_type: 'lovable_ai', action: 'whatsapp_agent_call1', model,
+      service_type: 'openai', action: 'whatsapp_agent_call1', model: mapModel(model),
       input_tokens: u1.prompt_tokens || 0, output_tokens: u1.completion_tokens || 0,
       total_cost: cost1, user_id: userId, company_id: companyId,
       metadata: { has_tool_calls: !!choice.message.tool_calls?.length },
@@ -1344,7 +1344,7 @@ Deno.serve(async (req) => {
         const u2 = followUpData.usage || {};
         const cost2 = ((u2.prompt_tokens || 0) / 1000) * 0.00015 + ((u2.completion_tokens || 0) / 1000) * 0.0006;
         logUsage({
-          service_type: 'lovable_ai', action: 'whatsapp_agent_call2', model,
+          service_type: 'openai', action: 'whatsapp_agent_call2', model: mapModel(model),
           input_tokens: u2.prompt_tokens || 0, output_tokens: u2.completion_tokens || 0,
           total_cost: cost2, user_id: userId, company_id: companyId,
         });

@@ -51,7 +51,8 @@ const SERVICE_LABELS: Record<string, { label: string; icon: React.ReactNode; col
 const COST_REFERENCE: Record<string, string> = {
   elevenlabs_tts: '~$0.30 / 1K chars (Multilingual v2)',
   openai_tts: '~$0.015 / 1K chars (TTS-1)',
-  lovable_ai: '~$0.00-0.01 / req (Gemini Flash) | ~$0.01-0.10 / req (GPT-5)',
+  lovable_ai: '~$0.00-0.01 / req (Gemini Flash) | ~$0.01-0.10 / req (GPT-5) — historico, anterior a migracao para a OpenAI',
+  openai: 'gpt-4o-mini ~$0.00015/$0.0006 por 1K tokens | gpt-4o ~$0.0025/$0.01 | gpt-image-1 ~$0.04 / imagem',
   send_email: '~$0.00 (Gmail) | ~$0.001 (Resend)',
   whatsapp_message: '~$0.00 (Baileys self-hosted)',
   assemblyai: '~$0.37 / hora de áudio',

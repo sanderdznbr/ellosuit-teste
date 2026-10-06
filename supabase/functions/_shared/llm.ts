@@ -86,3 +86,124 @@ export async function assistantText(res: Response): Promise<string> {
   const data = await res.json();
   return data?.choices?.[0]?.message?.content ?? '';
 }
+
+/* ------------------------------------------------------------------ imagens */
+
+export const OPENAI_IMAGE_URL = 'https://api.openai.com/v1/images/generations';
+export const OPENAI_IMAGE_EDIT_URL = 'https://api.openai.com/v1/images/edits';
+
+/**
+ * As functions de carrossel pediam 4:5 (1080x1350). A API de imagem da OpenAI
+ * so trabalha com 1024x1024, 1536x1024 e 1024x1536, entao o retrato 2:3 e o
+ * mais proximo do 4:5 e o front continua recortando.
+ */
+export const OPENAI_IMAGE_MODEL = 'gpt-image-1';
+export const OPENAI_IMAGE_SIZE = '1024x1536';
+
+export interface GenerateImageOptions {
+  prompt: string;
+  /** URLs http(s) ou data: URLs. Vazio usa /v1/images/generations. */
+  references?: string[];
+  size?: '1024x1024' | '1536x1024' | '1024x1536';
+  /** Esforco para casar com rostos/estilo das referencias (so no /images/edits). */
+  inputFidelity?: 'high' | 'low';
+  quality?: 'low' | 'medium' | 'high' | 'auto';
+}
+
+/** Baixa uma imagem de referencia e devolve os bytes, para o upload multipart. */
+async function referenceToBlob(url: string): Promise<Blob | null> {
+  try {
+    if (url.startsWith('data:')) {
+      const m = /^data:([^;,]+)?(;base64)?,([\s\S]*)$/.exec(url);
+      if (!m) return null;
+      const mime = m[1] || 'image/png';
+      if (m[2]) {
+        const bin = atob(m[3]);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new Blob([bytes], { type: mime });
+      }
+      return new Blob([decodeURIComponent(m[3])], { type: mime });
+    }
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!res.ok) return null;
+    return await res.blob();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Gera uma imagem pela API da OpenAI e devolve como data URL
+ * (`data:image/png;base64,...`), que e o formato que os chamadores de antes
+ * ja esperavam do gateway. Devolve null em caso de erro.
+ *
+ * Com referencias vai em /v1/images/edits (ate 16 imagens); sem elas,
+ * /v1/images/generations.
+ */
+export async function generateImage(opts: GenerateImageOptions): Promise<string | null> {
+  const { Authorization } = openAiHeaders();
+  const size = opts.size || OPENAI_IMAGE_SIZE;
+
+  const refs: Blob[] = [];
+  for (const ref of (opts.references || []).filter(Boolean).slice(0, 8)) {
+    const blob = await referenceToBlob(ref);
+    if (blob) refs.push(blob);
+  }
+
+  let res: Response;
+  if (refs.length === 0) {
+    res = await fetch(OPENAI_IMAGE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization },
+      body: JSON.stringify({
+        model: OPENAI_IMAGE_MODEL,
+        prompt: opts.prompt,
+        size,
+        n: 1,
+        ...(opts.quality ? { quality: opts.quality } : {}),
+      }),
+    });
+  } else {
+    const form = new FormData();
+    form.append('model', OPENAI_IMAGE_MODEL);
+    form.append('prompt', opts.prompt);
+    form.append('size', size);
+    form.append('n', '1');
+    if (opts.inputFidelity) form.append('input_fidelity', opts.inputFidelity);
+    if (opts.quality) form.append('quality', opts.quality);
+    refs.forEach((blob, i) => form.append('image[]', blob, `ref-${i}.png`));
+    // sem Content-Type: o runtime monta o boundary do multipart
+    res = await fetch(OPENAI_IMAGE_EDIT_URL, { method: 'POST', headers: { Authorization }, body: form });
+  }
+
+  if (!res.ok) {
+    console.error('[llm] generateImage falhou', res.status, (await res.text()).slice(0, 300));
+    return null;
+  }
+
+  const data = await res.json();
+  const b64 = data?.data?.[0]?.b64_json;
+  if (!b64) {
+    console.error('[llm] generateImage devolveu resposta sem imagem');
+    return null;
+  }
+  return `data:image/png;base64,${b64}`;
+}
+
+/* ------------------------------------------------------------------- arquivos */
+
+/**
+ * O Chat Completions da OpenAI aceita PDF como parte do tipo `file` (base64),
+ * que e o equivalente ao `image_url` com data:application/pdf que o gateway
+ * usava para a análise visual de PDF.
+ */
+export function pdfFilePart(pdfBase64: string, filename: string) {
+  return {
+    type: 'file',
+    file: {
+      filename,
+      file_data: `data:application/pdf;base64,${pdfBase64}`,
+    },
+  };
+}
