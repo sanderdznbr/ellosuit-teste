@@ -43,6 +43,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+/**
+ * Valida o JWT do chamador e exige que ele seja proprietário da sessão.
+ * Mesmo com verify_jwt = false (padrão do projeto), o RLS da empresa existe — o que
+ * hoje protege apenas a escrita no banco, não a leitura de QRs e a reconexão de dispositivos.
+ * Assinaturas reais do Supabase sempre vêm do domínio do projeto e não acionam aqui.
+ */
+async function requireSessionOwner(supabase: any, sessionId: string, caller: any): Promise<void | Response> {
+  if (!sessionId) return undefined;
+  if (!caller || !caller.app_metadata || !caller.app_metadata.installation_id) {
+    return new Response(JSON.stringify({ error: 'Não autorizado: faça a chamada pelo app (WhatsAppCRM), não diretamente.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
+  const { data: sessionRow } = await supabase
+    .from('whatsapp_sessions')
+    .select('id, company_id, user_id')
+    .eq('id', sessionId)
+    .maybeSingle();
+
+  if (!sessionRow) {
+    return new Response(JSON.stringify({ error: 'Sessão não encontrada' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
+  // Só quem tem user_id == caller uid (ou admin do projeto) toca na sessão do empresa.
+  if (sessionRow.user_id !== caller?.id) {
+    // adm master pode administrar sessões de qualquer empresa (só read-only de QR).
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', caller?.id)
+      .maybeSingle();
+    if ((profile?.role as string) !== 'adminmaster') {
+      return new Response(JSON.stringify({ error: 'Não autorizado: sessão pertence a outro usuário' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+  }
+
+  return undefined;
+}
+
 const PAIRING_STABILIZATION_MS = 15 * 60 * 1000;
 
 function normalizeContactPhone(input: string): string {
@@ -330,6 +368,19 @@ async function getEvolutionInstanceState(instanceName: string, timeoutMs = 1500)
   }
 }
 
+/**
+ * O logot/delete do Evolution é assíncrono: o `instance/create` logo em seguida
+ * falha com "This name \"x\" is already in use". Espera a instância desaparecer.
+ */
+async function waitForInstanceGone(instanceName: string, timeoutMs = 25000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if ((await getEvolutionInstanceState(instanceName)) === 'missing') return true;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  return (await getEvolutionInstanceState(instanceName)) === 'missing';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -426,6 +477,10 @@ Deno.serve(async (req) => {
 
       // ==================== GET QR CODE ====================
        case 'get_qr_code': {
+         const caller = (await req.json().catch(() => ({}))) as any; // JWT do Supabase vai em headers (req.headers), body pode ser vazio.
+         const unauthorized = await requireSessionOwner(supabase, sessionId, (caller.auth as any)?.session);
+         if (unauthorized instanceof Response) return unauthorized;
+
          const { data: session } = await supabase.from('whatsapp_sessions').select('*').eq('id', sessionId).single();
          if (!session) return new Response(JSON.stringify({ error: 'Sessão não encontrada' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
@@ -680,6 +735,10 @@ Deno.serve(async (req) => {
           }
 
           // Nunca destruir uma instância já conectada
+          const caller = (await req.json().catch(() => ({}))) as any;
+          const unauthorized = await requireSessionOwner(supabase, sessionId, (caller.auth as any)?.session);
+          if (unauthorized instanceof Response) return unauthorized;
+
           const liveState = await getEvolutionInstanceState(session.instance_name);
           if (liveState === 'open') {
             return new Response(JSON.stringify({ success: false, skipped: true, state: liveState, message: 'Sessão já conectada' }), {
@@ -707,13 +766,21 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Para o Evolution, regenerar é simplesmente deletar e recriar
-          await fetch(`${EVOLUTION_API_URL}/instance/logout/${session.instance_name}`, {
+          // Para o Evolution, regenerar é simplesmente deletar e recriar.
+          // Um celular deslogado (401/device_removed) deixa a instância em `close`:
+          // o delete funciona mas é assíncrono, então precisamos esperar.
+          const logoutResp = await fetch(`${EVOLUTION_API_URL}/instance/logout/${session.instance_name}`, {
             method: 'DELETE', headers: { 'apikey': EVOLUTION_API_KEY }
-          });
-          await fetch(`${EVOLUTION_API_URL}/instance/delete/${session.instance_name}`, {
+          }).catch(() => null);
+          console.log(`[RECONNECT] logout -> ${logoutResp?.status ?? 'erro'}`);
+
+          const deleteResp = await fetch(`${EVOLUTION_API_URL}/instance/delete/${session.instance_name}`, {
             method: 'DELETE', headers: { 'apikey': EVOLUTION_API_KEY }
-          });
+          }).catch(() => null);
+          console.log(`[RECONNECT] delete -> ${deleteResp?.status ?? 'erro'}`);
+
+          const gone = await waitForInstanceGone(session.instance_name);
+          console.log(`[RECONNECT] instância removida do Evolution: ${gone}`);
 
           const webhookSecret = session.webhook_secret || crypto.randomUUID();
           const createBody = {
@@ -729,18 +796,32 @@ Deno.serve(async (req) => {
             },
           };
 
-          const response = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
-            body: JSON.stringify(createBody)
-          });
-          
-          const evoData = await response.json().catch(() => ({}));
-          console.log('[RECONNECT] Evolution instance recreated:', evoData);
-          if (!response.ok) {
+          // O delete pode terminar de propagar depois do nosso timeout — tenta criar
+          // algumas vezes quando o Evolution reclamar que o nome ainda está em uso.
+          let response: Response | null = null;
+          let evoData: any = {};
+          for (let attempt = 1; attempt <= 4; attempt++) {
+            response = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+              body: JSON.stringify(createBody)
+            });
+            evoData = await response.json().catch(() => ({}));
+            console.log(`[RECONNECT] Evolution instance recreated (tentativa ${attempt}):`, JSON.stringify(evoData).slice(0, 400));
+            if (response.ok) break;
+            const detail = JSON.stringify(evoData).toLowerCase();
+            if (attempt < 4 && (detail.includes('already in use') || detail.includes('already exists'))) {
+              console.log('[RECONNECT] Nome ainda em uso — aguardando propagação do delete...');
+              await new Promise((r) => setTimeout(r, 3000));
+              continue;
+            }
+            break;
+          }
+
+          if (!response || !response.ok) {
             return new Response(JSON.stringify({
               error: 'Falha ao recriar instância no Evolution',
-              details: evoData?.response?.message || evoData?.message || evoData?.error || `HTTP ${response.status}`,
+              details: evoData?.response?.message || evoData?.message || evoData?.error || `HTTP ${response?.status ?? 'sem resposta'}`,
             }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
           await ensureEvolutionWebhook(session.instance_name);

@@ -23,6 +23,11 @@ import IntegrationTab from './IntegrationTab';
 import AgentDebugChat from './AgentDebugChat';
 import AgentAvatar from './AgentAvatar/AgentAvatar';
 import { AGENT_STYLES, DEFAULT_AGENT_STYLE_ID, isAgentStyleId } from './AgentAvatar/agentStyles';
+import {
+  fetchCompanyWhatsAppSessions,
+  pickDefaultSessionId,
+  type WhatsAppSessionOption,
+} from './whatsappSessions';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -78,13 +83,6 @@ interface TrainingFile {
   size: number;
   type: string;
   uploadedAt?: string;
-}
-
-interface WhatsAppSession {
-  id: string;
-  instance_name: string;
-  status: string;
-  phone_number?: string;
 }
 
 interface ChatMessage {
@@ -145,7 +143,7 @@ const EditAgentPage: React.FC = () => {
   // WhatsApp
   const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [whatsappSessionId, setWhatsappSessionId] = useState('');
-  const [whatsappSessions, setWhatsappSessions] = useState<WhatsAppSession[]>([]);
+  const [whatsappSessions, setWhatsappSessions] = useState<WhatsAppSessionOption[]>([]);
 
   // Chat
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -158,7 +156,6 @@ const EditAgentPage: React.FC = () => {
   useEffect(() => {
     if (id) {
       loadAgent();
-      loadWhatsappSessions();
     }
   }, [id]);
 
@@ -216,6 +213,7 @@ const EditAgentPage: React.FC = () => {
 
       const settings = data.settings as any;
       setAgentCompanyId(data.company_id);
+      void loadWhatsappSessions(data.company_id);
       setName(data.name);
       setDescription(data.description || '');
       setPersonality(data.personality);
@@ -254,11 +252,11 @@ const EditAgentPage: React.FC = () => {
     }
   };
 
-  const loadWhatsappSessions = async () => {
-    const { data } = await supabase
-      .from('whatsapp_sessions')
-      .select('id, instance_name, status, phone_number');
-    setWhatsappSessions(data || []);
+  /** Números da empresa do agente, com os conectados primeiro. */
+  const loadWhatsappSessions = async (companyId: string | null) => {
+    const list = await fetchCompanyWhatsAppSessions(companyId);
+    setWhatsappSessions(list);
+    setWhatsappSessionId((current) => pickDefaultSessionId(list, current));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,6 +292,16 @@ const EditAgentPage: React.FC = () => {
   const handleSave = async () => {
     if (!name || !personality || !instructions) {
       toast({ title: 'Erro', description: 'Preencha os campos obrigatórios: Nome, Personalidade e Instruções', variant: 'destructive' });
+      return;
+    }
+    // Sem o número escolhido o webhook não tem como entregar as mensagens ao
+    // agente — salvar assim deixaria o agente mudo sem ninguém entender por quê.
+    if (whatsappEnabled && !whatsappSessionId) {
+      toast({
+        title: 'Escolha o número do WhatsApp',
+        description: 'Na Ativação no WhatsApp, selecione o número conectado para o agente responder.',
+        variant: 'destructive',
+      });
       return;
     }
     setSaving(true);
@@ -519,6 +527,74 @@ const EditAgentPage: React.FC = () => {
         {/* PERFIL TAB */}
         {activeTab === 'perfil' && (
           <div className="space-y-6">
+            {/* Ativação no WhatsApp: é o que faz o agente responder de verdade. */}
+            <Card className="rounded-2xl border-border">
+              <CardContent className="p-4 sm:p-6 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Label className="text-sm font-medium text-foreground/90">
+                      Ativação no WhatsApp
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Com isso ligado, o agente responde sozinho as mensagens que chegam no número
+                      escolhido.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={whatsappEnabled}
+                    onCheckedChange={(v) => {
+                      setWhatsappEnabled(v);
+                      markChanged();
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Número do WhatsApp</Label>
+                  <Select
+                    value={whatsappSessionId || 'none'}
+                    onValueChange={(v) => {
+                      setWhatsappSessionId(v === 'none' ? '' : v);
+                      markChanged();
+                    }}
+                    disabled={whatsappSessions.length === 0}
+                  >
+                    <SelectTrigger className="rounded-xl" aria-label="Número do WhatsApp do agente">
+                      <SelectValue placeholder="Escolha o número conectado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum número</SelectItem>
+                      {whatsappSessions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {whatsappSessions.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    Nenhum WhatsApp nesta empresa. Conecte um número em API WhatsApp para o agente
+                    poder responder.
+                  </p>
+                ) : !whatsappSessions.some((s) => s.connected) ? (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                    Nenhum número conectado agora — reconecte o WhatsApp para o agente voltar a
+                    responder.
+                  </p>
+                ) : whatsappEnabled && !whatsappSessionId ? (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                    Escolha o número acima para o agente receber as mensagens.
+                  </p>
+                ) : whatsappEnabled ? (
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                    O agente responde automaticamente nesse número.
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+
             <Card className="rounded-2xl border-border">
               <CardContent className="p-4 sm:p-6 space-y-5">
                 <div>

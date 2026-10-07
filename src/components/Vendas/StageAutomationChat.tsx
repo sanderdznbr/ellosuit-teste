@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Check, Loader2, Send, Sparkles, Trash2, Workflow, Zap } from 'lucide-react';
+import { Check, Link2, Loader2, Send, Sparkles, Trash2, Workflow, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -34,10 +34,29 @@ interface ProposedAutomation {
   summary?: string;
 }
 
+/**
+ * Proposta de etapa compartilhada: a etapa `stageId` deste funil passa a mostrar
+ * os leads da etapa `sourceStageId` do funil `funnelId`.
+ */
+export interface ProposedLink {
+  stageId: string;
+  funnelId: string;
+  sourceStageId: string;
+  summary?: string;
+}
+
+/** Funil e etapas, como o chat precisa conhecer para vincular. */
+export interface FunnelCatalog {
+  id: string;
+  name: string;
+  stages: { id: string; title: string }[];
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   proposed?: ProposedAutomation[];
+  links?: ProposedLink[];
 }
 
 const TRIGGERS: AutomationTrigger[] = ['on_enter', 'after_days', 'no_response_days', 'moved'];
@@ -51,7 +70,7 @@ const ACTIONS: AutomationAction[] = [
   'webhook',
 ];
 
-const SYSTEM = `Você configura AUTOMAÇÕES de um funil de vendas. Fale português do Brasil, curto, direto e amigável.
+const SYSTEM = `Você configura AUTOMAÇÕES e ETAPAS COMPARTILHADAS de um funil de vendas. Fale português do Brasil, curto, direto e amigável.
 
 Cada automação é: uma etapa + um GATILHO + uma AÇÃO.
 
@@ -76,7 +95,19 @@ Regras de conversa:
   \`\`\`
 - Se ainda estiver perguntando, NÃO inclua o bloco.
 - Se o pedido NÃO for uma automação do funil (ex.: "receber leads de um formulário"), explique como fazer usando o recurso certo — por exemplo o webhook de entrada da etapa — e NÃO invente regra.
-- Nunca prometa integrações que a lista de ações não cobre.`;
+- Nunca prometa integrações que a lista de ações não cobre.
+
+ETAPAS COMPARTILHADAS ENTRE FUNIS:
+Uma etapa DESTE funil pode ser ligada a uma etapa de OUTRO funil. A etapa passa a mostrar os mesmos leads da etapa de origem — um lead só, visto nos dois funis — e mover o lead em qualquer um dos dois lugares move nos dois.
+- Use este recurso quando o usuário pedir para "vincular", "puxar os leads", "usar a mesma etapa", "espelhar a etapa" de outro funil.
+- É o oposto de copiar leads: nada é duplicado, a etapa é compartilhada. Diga isso em 1 frase.
+- Os ids de funil e de etapa são os do contexto. NUNCA invente id.
+- Proponha no bloco:
+  \`\`\`json
+  { "links": [ { "stageId": "<etapa DESTE funil>", "funnelId": "<funil de origem>", "sourceStageId": "<etapa do funil de origem>", "summary": "frase curta" } ] }
+  \`\`\`
+- Quando o pedido for só o vínculo, responda com o bloco de links e nada de automations.
+- Se a etapa de origem tiver leads parados, você pode sugerir também uma automação — mas só inclua o bloco de automations se o usuário pedir.`;
 
 function describe(a: FunnelAutomation | ProposedAutomation, stages: PipelineColumn[]) {
   const stage = stages.find((s) => s.id === a.stageId);
@@ -93,8 +124,12 @@ function AutomationChatDialog({
   stages,
   existing,
   webhookStageId,
+  funnelId,
+  funnels,
+  sharedStages,
   onApply,
   onRemove,
+  onApplyLinks,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -102,8 +137,13 @@ function AutomationChatDialog({
   stages: PipelineColumn[];
   existing: FunnelAutomation[];
   webhookStageId?: string | null;
+  funnelId: string;
+  funnels: FunnelCatalog[];
+  /** Etapas já compartilhadas deste funil, para a IA não repetir vínculo. */
+  sharedStages: { title: string; origin: string }[];
   onApply: (automations: FunnelAutomation[]) => void;
   onRemove: (id: string) => void;
+  onApplyLinks: (links: ProposedLink[]) => void;
 }) {
   const { toast } = useToast();
   const greeting = useMemo(
@@ -112,7 +152,8 @@ function AutomationChatDialog({
       'Me diga o que deve acontecer aqui. Por exemplo:\n' +
       '- *“Todo lead que entrar aqui recebe uma mensagem de boas-vindas no WhatsApp.”*\n' +
       '- *“Se o lead ficar 2 dias parado sem responder, cria uma tarefa para a equipe.”*\n' +
-      '- *“Quando o lead mandar comprovante de pagamento, move para Venda Ganha.”*\n\n' +
+      '- *“Quando o lead mandar comprovante de pagamento, move para Venda Ganha.”*\n' +
+      '- *“Puxa para esta etapa os leads da etapa Orçamento do funil Comercial.”*\n\n' +
       'Eu explico o que dá para fazer e monto a regra para você conferir.',
     [stage.title],
   );
@@ -145,8 +186,22 @@ function AutomationChatDialog({
     setSending(true);
     try {
       const context = [
+        `Funil aberto: ${funnels.find((f) => f.id === funnelId)?.name ?? 'este funil'} (id: ${funnelId})`,
         `Etapa alvo: ${stage.title} (id: ${stage.id})`,
-        `Etapas do funil:\n${stages.map((s) => `- ${s.title} (id: ${s.id})`).join('\n')}`,
+        `Etapas deste funil:\n${stages.map((s) => `- ${s.title} (id: ${s.id})`).join('\n')}`,
+        `Todos os funis da empresa e suas etapas:\n${funnels
+          .map(
+            (f) =>
+              `- ${f.name} (id: ${f.id})${f.id === funnelId ? ' ← ESTE' : ''}:\n${f.stages
+                .map((s) => `    - ${s.title} (id: ${s.id})`)
+                .join('\n')}`,
+          )
+          .join('\n')}`,
+        `Etapas deste funil que já são compartilhadas com outro funil:\n${
+          sharedStages.length
+            ? sharedStages.map((s) => `- ${s.title} ← ${s.origin}`).join('\n')
+            : 'nenhuma'
+        }`,
         webhookStageId
           ? `A etapa que recebe leads de webhook/formulário é: ${stages.find((s) => s.id === webhookStageId)?.title ?? webhookStageId} (id: ${webhookStageId})`
           : 'Nenhuma etapa está marcada como destino de webhook.',
@@ -171,6 +226,7 @@ function AutomationChatDialog({
       const raw: string = data?.response || data?.message || '';
       const match = raw.match(/```json\s*([\s\S]*?)```/i);
       let proposed: ProposedAutomation[] | undefined;
+      let links: ProposedLink[] | undefined;
       if (match) {
         try {
           const parsed = JSON.parse(match[1]);
@@ -189,15 +245,28 @@ function AutomationChatDialog({
               }));
             if (proposed.length === 0) proposed = undefined;
           }
+          // Vínculo entre funis: só vale com ids reais do contexto, e nunca com
+          // uma etapa do próprio funil.
+          if (Array.isArray(parsed?.links)) {
+            links = (parsed.links as ProposedLink[]).filter((l) => {
+              if (!l?.stageId || !l.funnelId || !l.sourceStageId) return false;
+              if (l.funnelId === funnelId) return false;
+              if (!stages.some((s) => s.id === l.stageId)) return false;
+              const source = funnels.find((f) => f.id === l.funnelId);
+              return !!source?.stages.some((s) => s.id === l.sourceStageId);
+            });
+            if (links.length === 0) links = undefined;
+          }
         } catch {
           proposed = undefined;
+          links = undefined;
         }
       }
 
       const clean = raw.replace(/```json[\s\S]*?```/gi, '').trim();
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: clean || 'Certo!', proposed },
+        { role: 'assistant', content: clean || 'Certo!', proposed, links },
       ]);
     } catch (e) {
       console.error('[funil] automation chat error', e);
@@ -209,6 +278,17 @@ function AutomationChatDialog({
     } finally {
       setSending(false);
     }
+  };
+
+  /** "Comercial › Orçamento" — origem do vínculo proposto. */
+  const describeLink = (l: ProposedLink) => {
+    const source = funnels.find((f) => f.id === l.funnelId);
+    const sourceStage = source?.stages.find((s) => s.id === l.sourceStageId);
+    const here = stages.find((s) => s.id === l.stageId);
+    return {
+      here: here?.title ?? 'etapa',
+      origin: `${source?.name ?? 'outro funil'} › ${sourceStage?.title ?? 'etapa'}`,
+    };
   };
 
   const apply = (proposed: ProposedAutomation[]) => {
@@ -314,6 +394,38 @@ function AutomationChatDialog({
                           >
                             <Check className="mr-1.5 h-3.5 w-3.5" />
                             Aplicar {m.proposed.length} regra{m.proposed.length > 1 ? 's' : ''}
+                          </Button>
+                        </div>
+                      )}
+
+                      {m.links && m.links.length > 0 && (
+                        <div className="space-y-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                            <Link2 className="h-3.5 w-3.5" />
+                            {m.links.length > 1
+                              ? 'Etapas compartilhadas propostas'
+                              : 'Etapa compartilhada proposta'}
+                          </div>
+                          {m.links.map((l, li) => {
+                            const info = describeLink(l);
+                            return (
+                              <div key={li} className="space-y-1 rounded-lg bg-background/70 p-2.5">
+                                <div className="text-xs font-medium text-foreground">
+                                  {info.here} ← {info.origin}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Mesmos leads nos dois funis — mover aqui move no funil de origem.
+                                </p>
+                              </div>
+                            );
+                          })}
+                          <Button
+                            size="sm"
+                            onClick={() => onApplyLinks(m.links!)}
+                            className="h-8 w-full bg-emerald-600 text-white hover:bg-emerald-600/90"
+                          >
+                            <Check className="mr-1.5 h-3.5 w-3.5" />
+                            Compartilhar {m.links.length} etapa{m.links.length > 1 ? 's' : ''}
                           </Button>
                         </div>
                       )}
@@ -426,7 +538,11 @@ export function StageAutomationChat({
   stages,
   automations,
   webhookStageId,
+  funnelId,
+  funnels,
+  sharedStages,
   onAutomationsChange,
+  onLinkStages,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -435,7 +551,12 @@ export function StageAutomationChat({
   stages: PipelineColumn[];
   automations: FunnelAutomation[];
   webhookStageId?: string | null;
+  /** Funil aberto e os demais, para compartilhar etapas entre eles. */
+  funnelId: string;
+  funnels: FunnelCatalog[];
+  sharedStages: { title: string; origin: string }[];
   onAutomationsChange: (automations: FunnelAutomation[]) => void;
+  onLinkStages: (links: ProposedLink[]) => void;
 }) {
   if (!stage) return null;
   return (
@@ -446,8 +567,12 @@ export function StageAutomationChat({
       stages={stages}
       existing={automations}
       webhookStageId={webhookStageId}
+      funnelId={funnelId}
+      funnels={funnels}
+      sharedStages={sharedStages}
       onApply={(created) => onAutomationsChange([...automations, ...created])}
       onRemove={(id) => onAutomationsChange(automations.filter((a) => a.id !== id))}
+      onApplyLinks={onLinkStages}
     />
   );
 }

@@ -145,7 +145,7 @@ async function processAutoReply(body: any) {
 
   const { data: agent } = await supabase
     .from('ai_agents')
-    .select('id, name, personality, instructions, settings, is_active')
+    .select('id, name, personality, instructions, settings, is_active, model')
     .eq('id', conversation.assigned_agent_id)
     .maybeSingle();
   if (!agent) return;
@@ -153,6 +153,10 @@ async function processAutoReply(body: any) {
   const settings = (agent.settings || {}) as Record<string, any>;
   const maxChars = settings.maxResponseChars ?? 500;
   const temperature = settings.temperature ?? 0.7;
+  // Use the model configured on the agent (e.g. "openai/gpt-5-mini"). Fall back to
+  // the OpenAI default when the agent has none — ai-chat/_shared/llm.ts maps every
+  // gateway name (google/*, openai/*, ...) to a real OpenAI model id.
+  const agentModel = ((agent as any).model as string) || (settings.model as string) || 'openai/gpt-5-mini';
   const audioResponseMode = (settings.audioResponseMode as string) || 'disabled';
   const ttsVoice = (settings.ttsVoice as string) || 'alloy';
 
@@ -337,10 +341,11 @@ async function processAutoReply(body: any) {
     return;
   }
 
+  console.log(`🤖 [AI-AUTO-REPLY] Asking ai-chat (OpenAI) with model "${agentModel}" for agent ${agent.name}`);
   const aiResponse = await fetch(`${SUPABASE_URL}/functions/v1/ai-chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-    body: JSON.stringify({ messages, model: 'google/gemini-3-flash-preview', temperature }),
+    body: JSON.stringify({ messages, model: agentModel, temperature }),
   });
   if (!aiResponse.ok) {
     console.error('🤖 [AI-AUTO-REPLY] ai-chat failed:', aiResponse.status, await aiResponse.text());

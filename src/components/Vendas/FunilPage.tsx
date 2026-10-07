@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Pencil, Plus, Settings2, TrendingUp } from 'lucide-react';
+import { Check, Link2, Pencil, Plus, Settings2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { FunnelBuilder } from './FunnelBuilder';
 import { FunnelChart } from './FunnelChart';
 import { FunnelStylePicker } from './FunnelStylePicker';
 import { FunnelSwitcher } from './FunnelSwitcher';
 import { StageAutomationChat } from './StageAutomationChat';
 import { formatBRL } from './FunnelKanban';
-import { useFunnelData } from './useFunnelData';
+import { useFunnelData, type StageView } from './useFunnelData';
 import { useToast } from '@/hooks/use-toast';
 import { defaultWeight, loadCrmColumns, resolveChartStyle, type PipelineColumn } from './types';
 
@@ -26,8 +33,7 @@ export function FunilPage() {
   const {
     funnel,
     funnels,
-    stages,
-    stageRows,
+    funnelStages,
     create,
     createFunnel,
     deleteFunnel,
@@ -159,7 +165,33 @@ export function FunilPage() {
   /** Pipeline que segue ESTE funil (as etapas dele são as daqui). */
   const linkedPipeline = data.pipelines.find((p) => p.funnelId === funnel.id) || null;
 
-  const countsByStage = Object.fromEntries(stageRows.map((r) => [r.id, r.count]));
+  /* ─── Números e etapas DESTE funil ───────────────────────── */
+  /**
+   * Tudo aqui sai das etapas do funil aberto (não do pipeline ativo): editar o
+   * funil muda a tela na hora, que é o que se espera desta página.
+   */
+  const rowsOfFunnel = data.rowsForStages(funnelStages);
+  const statsOfFunnel = data.statsForStages(funnelStages);
+  const countsByStage = Object.fromEntries(rowsOfFunnel.map((r) => [r.id, r.count]));
+
+  /** Texto do vínculo das etapas compartilhadas ("Comercial › Orçamento"). */
+  const linkTextOf = (stage: StageView): string | null => {
+    if (!stage.sourceStageId) return null;
+    const sourceFunnel = funnels.find((f) => f.id === stage.sourceFunnelId);
+    const sourceStage = sourceFunnel?.stages.find((s) => s.id === stage.sourceStageId);
+    return `${sourceFunnel?.name ?? 'outro funil'} › ${sourceStage?.title ?? 'etapa'}`;
+  };
+  const linksByStage: Record<string, string> = {};
+  funnelStages.forEach((s) => {
+    const text = linkTextOf(s);
+    if (text) linksByStage[s.id] = text;
+  });
+  /** Etapas de OUTROS funis — destinos possíveis de um vínculo. */
+  const sourceOptions = funnels
+    .filter((f) => f.id !== funnel.id)
+    .flatMap((f) =>
+      (f.stages || []).map((s) => ({ value: `${f.id}::${s.id}`, label: `${f.name} › ${s.title}` })),
+    );
   const chartStyle = resolveChartStyle(funnel.chartStyle);
   const automationCounts = (funnel.automations || []).reduce<Record<string, number>>((acc, a) => {
     if (a.active) acc[a.stageId] = (acc[a.stageId] || 0) + 1;
@@ -209,10 +241,10 @@ export function FunilPage() {
             {funnel.name}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {data.stats.total}{' '}
-            {data.stats.total === 1 ? 'contato' : 'contatos'} ·{' '}
+            {statsOfFunnel.total}{' '}
+            {statsOfFunnel.total === 1 ? 'contato' : 'contatos'} ·{' '}
             <span className="font-semibold text-emerald-600">
-              {formatBRL(data.stats.totalValue) || 'R$ 0'}
+              {formatBRL(statsOfFunnel.totalValue) || 'R$ 0'}
             </span>{' '}
             em negociação
           </p>
@@ -262,11 +294,90 @@ export function FunilPage() {
               onChange={applyStages}
               counts={countsByStage}
               automationCounts={automationCounts}
+              links={linksByStage}
               onAutomate={(stageId) => {
                 const stage = builderStages.find((s) => s.id === stageId);
                 if (stage) setAutomationStage(stage);
               }}
             />
+
+            {/* Etapa compartilhada: mesmo lead em dois funis. */}
+            <div className="space-y-2 rounded-2xl border bg-muted/20 p-3 sm:p-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+                Etapas compartilhadas com outro funil
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Escolha uma etapa de outro funil para esta etapa mostrar os mesmos leads dela.
+                Movendo o lead em qualquer um dos dois funis, ele anda nos dois.
+              </p>
+              {sourceOptions.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground/70">
+                  Crie outro funil para poder compartilhar etapas.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {funnelStages.map((s) => {
+                    const linked = !!s.sourceStageId;
+                    return (
+                      <div key={s.id} className="flex items-center gap-2">
+                        <span className="flex min-w-0 flex-1 items-center gap-2 text-xs">
+                          <span
+                            className="h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: s.color }}
+                          />
+                          <span className="truncate">{s.title || 'Etapa'}</span>
+                        </span>
+                        <Select
+                          value={
+                            linked ? `${s.sourceFunnelId}::${s.sourceStageId}` : 'none'
+                          }
+                          onValueChange={(value) => {
+                            if (value === 'none') {
+                              data.setStageSource(s.id, null);
+                              toast({
+                                title: 'Etapa desvinculada',
+                                description:
+                                  'Agora ela é uma etapa só deste funil: os leads chegam aqui quando forem movidos para ela.',
+                              });
+                              return;
+                            }
+                            const [byFunnel, byStage] = value.split('::');
+                            const ok = data.setStageSource(s.id, {
+                              funnelId: byFunnel,
+                              stageId: byStage,
+                            });
+                            if (!ok) {
+                              toast({
+                                title: 'Não foi possível vincular',
+                                description: 'A etapa de origem não existe mais.',
+                                variant: 'destructive',
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger
+                            className="h-8 w-[46%] min-w-[150px] text-xs"
+                            aria-label={`Etapa de origem de ${s.title || 'etapa'}`}
+                          >
+                            <SelectValue placeholder="Sem vínculo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sem vínculo</SelectItem>
+                            {sourceOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {linkedPipeline && (
               <p className="text-center text-[11px] text-muted-foreground">
                 Nome, ordem e cor das etapas valem também no pipeline “{linkedPipeline.name}”.
@@ -279,7 +390,7 @@ export function FunilPage() {
         )}
 
         {/* O funil */}
-        {stages.length === 0 ? (
+        {funnelStages.length === 0 ? (
           <div className="rounded-2xl border border-dashed py-16 text-center">
             <p className="text-sm text-muted-foreground">Este pipeline ainda não tem etapas.</p>
             <Button className="mt-4" onClick={() => setEditing(true)}>
@@ -295,16 +406,25 @@ export function FunilPage() {
             />
             <FunnelChart
               variant={chartStyle}
-              stages={stages.map((s) => ({ id: s.id, title: s.title, color: s.color }))}
-              counts={stageRows.map((r) => r.count)}
-              frios={stageRows.map((r) => r.frio)}
-              weights={stages.map((s) => s.weight)}
+              stages={funnelStages.map((s) => ({ id: s.id, title: s.title, color: s.color }))}
+              counts={rowsOfFunnel.map((r) => r.count)}
+              frios={rowsOfFunnel.map((r) => r.frio)}
+              weights={funnelStages.map((s) => s.weight)}
               showNumbers
               onSelectStage={goToStage}
             />
             <p className="text-center text-xs text-muted-foreground">
               Clique numa etapa para ver os contatos dela
             </p>
+            {Object.keys(linksByStage).length > 0 && (
+              <p className="text-center text-[11px] text-muted-foreground">
+                Etapas compartilhadas:{' '}
+                {funnelStages
+                  .filter((s) => linksByStage[s.id])
+                  .map((s) => `${s.title} (${linksByStage[s.id]})`)
+                  .join(' · ')}
+              </p>
+            )}
             <p className="mt-1 text-center text-[11px] text-muted-foreground/70 sm:hidden">
               Arraste o funil para o lado para ver todas as etapas
             </p>
@@ -320,6 +440,35 @@ export function FunilPage() {
         automations={funnel.automations || []}
         webhookStageId={funnel.webhook?.stageId}
         onAutomationsChange={(automations) => update({ automations })}
+        funnelId={funnel.id}
+        funnels={funnels.map((f) => ({
+          id: f.id,
+          name: f.name,
+          stages: (f.stages || []).map((s) => ({ id: s.id, title: s.title })),
+        }))}
+        sharedStages={funnelStages
+          .filter((s) => !!linksByStage[s.id])
+          .map((s) => ({ title: s.title, origin: linksByStage[s.id] }))}
+        onLinkStages={(links) => {
+          const applied = links.filter((l) =>
+            data.setStageSource(l.stageId, { funnelId: l.funnelId, stageId: l.sourceStageId }),
+          );
+          toast(
+            applied.length
+              ? {
+                  title:
+                    applied.length > 1
+                      ? `${applied.length} etapas compartilhadas`
+                      : 'Etapa compartilhada',
+                  description: 'Os leads da etapa de origem aparecem aqui também.',
+                }
+              : {
+                  title: 'Não foi possível vincular',
+                  description: 'Confira o funil e a etapa de origem.',
+                  variant: 'destructive',
+                },
+          );
+        }}
       />
     </div>
   );

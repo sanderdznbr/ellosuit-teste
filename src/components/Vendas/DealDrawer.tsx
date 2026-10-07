@@ -250,7 +250,7 @@ export function DealDrawer({
               owner={crmDeal.owner || ''}
               value={crmDeal.value}
               notes={crmDeal.notes || ''}
-              stageId={crmLead.pipeline_stage || ''}
+              stageId={data.displayStageIdOf(crmLead.pipeline_stage) || ''}
               temp={crmDeal.temperature || crmLead.temperature_stage || null}
               iaTemp={crmLead.temperature_stage || null}
               lastMessage={crmLead.last_message}
@@ -269,7 +269,7 @@ export function DealDrawer({
               owner={localDeal.owner || ''}
               value={localDeal.value}
               notes={localDeal.notes || ''}
-              stageId={localDeal.stageId}
+              stageId={data.displayStageIdOf(localDeal.stageId) || ''}
               temp={localDeal.temperature || null}
               iaTemp={null}
               lastMessage={undefined}

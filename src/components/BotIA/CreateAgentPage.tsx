@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Bot, Brain, FileText, Upload, X, Check, Sparkles, Wand2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import AgentAvatar from './AgentAvatar/AgentAvatar';
 import { AGENT_STYLES, DEFAULT_AGENT_STYLE_ID } from './AgentAvatar/agentStyles';
+import {
+  fetchCompanyWhatsAppSessions,
+  pickDefaultSessionId,
+  type WhatsAppSessionOption,
+} from './whatsappSessions';
 
 const OMNI_COLOR = '#374DA4';
 
@@ -63,6 +68,7 @@ const CreateAgentPage: React.FC = () => {
   // Step 4 - Ativação
   const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [whatsappSessionId, setWhatsappSessionId] = useState('');
+  const [whatsappSessions, setWhatsappSessions] = useState<WhatsAppSessionOption[]>([]);
 
   // Criação com IA
   const [showAiDialog, setShowAiDialog] = useState(false);
@@ -157,6 +163,30 @@ Seja criativo e detalhado nas instruções. O personality deve ter pelo menos 10
     return newCompany.id;
   };
 
+  /**
+   * Números de WhatsApp da empresa para escolher na ativação. Só lê — a empresa
+   * é criada de fato quando o agente é salvo.
+   */
+  useEffect(() => {
+    if (!user?.id) return;
+    void (async () => {
+      const metadataCompanyId = (user.user_metadata as { company_id?: string } | undefined)?.company_id;
+      let companyId: string | null = metadataCompanyId ?? null;
+      if (!companyId) {
+        const { data } = await supabase
+          .from('company_users')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        companyId = data?.company_id ?? null;
+      }
+      const list = await fetchCompanyWhatsAppSessions(companyId);
+      setWhatsappSessions(list);
+      setWhatsappSessionId((current) => pickDefaultSessionId(list, current));
+    })();
+  }, [user?.id, user?.user_metadata]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -190,6 +220,16 @@ Seja criativo e detalhado nas instruções. O personality deve ter pelo menos 10
 
   const handleCreate = async () => {
     if (!user?.id) return;
+    // Sem o número escolhido o agente nasce mudo: o webhook só entrega mensagens
+    // ao agente quando o número está vinculado.
+    if (whatsappEnabled && !whatsappSessionId) {
+      toast({
+        title: 'Escolha o número do WhatsApp',
+        description: 'Selecione o número conectado para o agente responder, ou desligue o WhatsApp.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setSaving(true);
     try {
       const companyId = await ensureCompany();
@@ -552,6 +592,44 @@ Seja criativo e detalhado nas instruções. O personality deve ter pelo menos 10
                     </div>
                     <Switch checked={whatsappEnabled} onCheckedChange={setWhatsappEnabled} />
                   </div>
+
+                  {whatsappEnabled && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-2">
+                      <Label htmlFor="agente-numero-whatsapp">Número do WhatsApp</Label>
+                      <Select
+                        value={whatsappSessionId || 'none'}
+                        onValueChange={(v) => setWhatsappSessionId(v === 'none' ? '' : v)}
+                        disabled={whatsappSessions.length === 0}
+                      >
+                        <SelectTrigger id="agente-numero-whatsapp" className="rounded-xl">
+                          <SelectValue placeholder="Escolha o número conectado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhum número</SelectItem>
+                          {whatsappSessions.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {whatsappSessions.length === 0 ? (
+                        <p className="text-xs text-amber-600">
+                          Nenhum WhatsApp nesta empresa. Conecte um número em API WhatsApp para o
+                          agente poder responder.
+                        </p>
+                      ) : !whatsappSessions.some((s) => s.connected) ? (
+                        <p className="text-xs text-amber-600">
+                          Nenhum número conectado agora — o agente só responde com o WhatsApp
+                          conectado.
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500">
+                          O agente responde automaticamente as mensagens desse número.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </CardContent>

@@ -13,8 +13,8 @@ import {
   emptyWorkspace,
   loadCrmColumns,
   loadWorkspace,
-  newCrmPipeline,
   newFunnel,
+  newFunnelPipeline,
   normalizeWorkspace,
   Pipeline,
   PipelineColumn,
@@ -195,21 +195,22 @@ export function useSalesWorkspace() {
   );
 
   /**
-   * Cria um funil. O pipeline do CRM nasce junto com o PRIMEIRO funil — os
-   * seguintes só entram na lista, senão cada funil criaria outro pipeline do CRM.
+   * Cria um funil. O funil nasce com o PRÓPRIO pipeline, já vinculado: é o que
+   * dá um quadro de leads para ele e faz o kanban de Vendas acompanhar o funil
+   * novo — sem isso o funil recém-criado não tinha onde mostrar as etapas.
    */
   const createFunnel = useCallback(
     (name: string, stages?: PipelineStage[]) => {
       const funnel = newFunnel(name, stages);
       mutate((prev) => {
         const base = prev ?? emptyWorkspace();
-        const pipelines = base.pipelines.length ? base.pipelines : [newCrmPipeline(funnel)];
+        const pipeline = newFunnelPipeline(funnel);
         return {
           ...base,
           funnels: [...base.funnels, funnel],
           activeFunnelId: funnel.id,
-          pipelines,
-          activePipelineId: base.activePipelineId || pipelines[0].id,
+          pipelines: [...base.pipelines, pipeline],
+          activePipelineId: pipeline.id,
         };
       });
       return funnel;
@@ -217,14 +218,25 @@ export function useSalesWorkspace() {
     [mutate],
   );
 
+  /** Troca o funil ativo levando o pipeline do funil junto — eles andam em par. */
   const setActiveFunnel = useCallback(
-    (id: string) => updateWorkspace({ activeFunnelId: id }),
-    [updateWorkspace],
+    (id: string) =>
+      mutate((prev) => {
+        if (!prev || !prev.funnels.some((f) => f.id === id)) return prev;
+        const linked = prev.pipelines.find((p) => p.funnelId === id);
+        return {
+          ...prev,
+          activeFunnelId: id,
+          activePipelineId: linked?.id ?? prev.activePipelineId,
+        };
+      }),
+    [mutate],
   );
 
   /**
-   * Remove um funil (o último não sai). Pipelines vinculados a ele ficam sem
-   * vínculo em vez de apontar para algo inexistente.
+   * Remove um funil (o último não sai). O pipeline automático daquele funil vai
+   * junto, com os leads próprios dele; pipelines feitos à mão ficam sem vínculo.
+   * Etapas compartilhadas que apontavam para ele perdem o vínculo.
    */
   const deleteFunnel = useCallback(
     (id: string) => {
@@ -234,11 +246,37 @@ export function useSalesWorkspace() {
         const funnels = prev.funnels.filter((f) => f.id !== id);
         if (funnels.length === prev.funnels.length) return prev;
         removed = true;
+
+        const autoIds = new Set(
+          prev.pipelines.filter((p) => p.autoCreated && p.funnelId === id).map((p) => p.id),
+        );
+        const kept = prev.pipelines.filter((p) => !autoIds.has(p.id));
+        const pipelines = (kept.length ? kept : prev.pipelines).map((p) =>
+          p.funnelId === id ? { ...p, funnelId: null } : p,
+        );
+
         return {
           ...prev,
-          funnels,
+          funnels: funnels.map((f) => ({
+            ...f,
+            stages: f.stages.map((s) =>
+              s.sourceFunnelId === id
+                ? {
+                    id: s.id,
+                    title: s.title,
+                    color: s.color,
+                    weight: s.weight,
+                    description: s.description,
+                  }
+                : s,
+            ),
+          })),
           activeFunnelId: prev.activeFunnelId === id ? funnels[0].id : prev.activeFunnelId,
-          pipelines: prev.pipelines.map((p) => (p.funnelId === id ? { ...p, funnelId: null } : p)),
+          pipelines,
+          activePipelineId: pipelines.some((p) => p.id === prev.activePipelineId)
+            ? prev.activePipelineId
+            : pipelines[0].id,
+          localDeals: prev.localDeals.filter((d) => !autoIds.has(d.pipelineId)),
         };
       });
       return removed;

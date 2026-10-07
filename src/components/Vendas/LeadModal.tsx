@@ -107,8 +107,14 @@ export function LeadModal({
       ? deal.contact || crmLead?.contact_name || crmLead?.contact_phone || 'Lead'
       : deal.contact || deal.name || 'Lead';
   const phone = target.kind === 'crm' ? crmLead?.contact_phone : deal.phone;
-  const stageId =
+  /**
+   * A etapa mostrada no seletor é a COLUNA que exibe o lead: numa etapa
+   * compartilhada o lead mora na etapa de origem, mas quem o mostra aqui é a
+   * coluna compartilhada.
+   */
+  const dataStageId =
     target.kind === 'crm' ? crmLead?.pipeline_stage || '' : deal.stageId || '';
+  const stageId = data.displayStageIdOf(dataStageId) || dataStageId;
   const stage = stages.find((s) => s.id === stageId);
   const temp = deal.temperature || crmLead?.temperature_stage || null;
 

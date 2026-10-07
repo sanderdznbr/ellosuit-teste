@@ -72,6 +72,23 @@ export async function chatCompletion(body: Record<string, unknown>): Promise<Res
     if (/model[_ ]?not[_ ]?found|does not exist|invalid_model|unknown model/i.test(detail)) {
       console.warn(`[llm] modelo "${payload.model}" indisponível — repetindo com ${OPENAI_FALLBACK_MODEL}`);
       res = await post({ ...payload, model: OPENAI_FALLBACK_MODEL });
+      return res;
+    }
+
+    // Modelos de raciocínio (gpt-5*, o1/o3/o4...) só aceitam a temperatura padrão e
+    // usam max_completion_tokens em vez de max_tokens. Sem isso a chamada morre com
+    // 400 "Unsupported value: 'temperature' does not support 0.7 with this model"
+    // e o agente de IA simplesmente não responde. Repete uma vez sem esses campos.
+    if (/unsupported value|unsupported parameter|does not support|max_tokens/i.test(detail)) {
+      const relaxed: Record<string, unknown> = { ...payload };
+      delete relaxed.temperature;
+      delete relaxed.top_p;
+      if (relaxed.max_tokens != null) {
+        relaxed.max_completion_tokens = relaxed.max_tokens;
+        delete relaxed.max_tokens;
+      }
+      console.warn(`[llm] ${payload.model} rejeitou parâmetros de amostragem — repetindo com os padrões do modelo`);
+      res = await post(relaxed);
     }
   }
 

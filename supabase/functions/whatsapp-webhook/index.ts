@@ -967,7 +967,16 @@ async function findRecentHumanOutboundMessage(supabase: any, conversationId: str
   }
 
   for (const msg of recentOutbound || []) {
-    if (isAutomatedOutboundMessage(msg)) continue;
+    // A lista vem da mensagem mais nova para a mais antiga. Se a primeira coisa
+    // que encontramos é um envio do próprio robô, o agente é quem está no
+    // comando agora: mensagens humanas ANTERIORES a ela (um teste do dono, um
+    // aviso do sistema, uma resposta já ultrapassada) não são um humano
+    // presente na conversa. Sem isso, um "teste" enviado antes do agente
+    // assumir silenciava o atendimento automático pelas 6h seguintes.
+    if (isAutomatedOutboundMessage(msg)) {
+      console.log('[HUMAN-TAKEOVER] Latest outbound is automated; older outbound messages are not a human takeover.');
+      return null;
+    }
 
     const content = String(msg?.content || '').trim();
     if (!content) continue;
@@ -1272,14 +1281,31 @@ Deno.serve(async (req) => {
               console.error('[SESSION-MIGRATE] Error migrating sessions:', migrationErr);
             }
           } else if (connection === 'close') {
-            const reason = String(statusReason || lastDisconnect?.error?.output?.statusCode || lastDisconnect?.reason || '').toLowerCase();
-            const looksLikeLogout = reason.includes('logged') || reason.includes('logout') || reason === '401' || reason === '403';
+            const reason = String(statusReason || lastDisconnect?.error?.output?.statusCode || lastDisconnect?.reason || lastDisconnect?.error?.message || '').toLowerCase();
+            const disconnectReasonMessage = String(lastDisconnect?.error?.output?.payload?.message || lastDisconnect?.error?.message || '').toLowerCase();
+            const looksLikeLogout = reason.includes('logged') || reason.includes('logout') || reason === '401' || reason === '403'
+              || reason.includes('device_removed') || reason.includes('device removed')
+              || disconnectReasonMessage.includes('device_removed') || disconnectReasonMessage.includes('device removed')
+              || disconnectReasonMessage.includes('conflict');
             const wasJustOpen = isRecentIso(String(existingSessionData.last_connection_open_at || ''), TRANSIENT_CLOSE_GRACE_MS);
 
-            // Baileys commonly emits close/401 while replacing the QR transport with
-            // the authenticated socket. A close immediately after open is transient;
-            // an explicit logout is handled outside this short stabilization window.
-            if (wasRecentlyAlive || wasJustOpen) {
+            // Baileys commonly emits a transient close/401 while replacing the QR transport
+            // with the authenticated socket. But an explicit logout or a 401/403
+            // (device_removed / conflict) means the linked device is gone for good: the
+            // phone must re-pair. Never mask those as transient, otherwise the session
+            // stays "connected" in the UI while it is actually dead and the agent goes mute.
+            if (looksLikeLogout) {
+              updateData.status = 'disconnected';
+              updateData.session_data = {
+                ...existingSessionData,
+                connection_state: 'close_logged_out',
+                last_connection_close_at: new Date().toISOString(),
+                last_connection_close_reason: statusReason || lastDisconnect || null,
+                qr_code: null,
+              };
+              updateData.qr_code = null;
+              console.log(`[CONNECTION-LOGOUT] Session ${sessionId} logged out / device removed (reason: ${reason || disconnectReasonMessage}); marked disconnected.`);
+            } else if (wasRecentlyAlive || wasJustOpen) {
               updateData.status = 'connected';
               updateData.session_data = {
                 ...existingSessionData,
@@ -3417,6 +3443,57 @@ Deno.serve(async (req) => {
                   }).catch((e) => console.error('[DISPATCH-QUALIFIER] dispatch failed:', e));
                   const runtime = globalThis as unknown as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } };
                   if (runtime.EdgeRuntime?.waitUntil) runtime.EdgeRuntime.waitUntil(work as Promise<unknown>);
+                }
+              }
+
+              // ==================== AUTO-ASSIGN AI AGENT BY SESSION (conversa já existente) ====================
+              // A vinculação agente↔número só acontecia quando a conversa era CRIADA.
+              // Resultado: toda conversa que já existia (ou que nasceu de um disparo)
+              // nunca recebia o agente e o cliente ficava sem resposta para sempre.
+              // Aqui fechamos o buraco: se a conversa ainda não tem agente e o número
+              // tem um agente ativo vinculado, ele assume agora e o worker responde.
+              if (!dispatchReplyHandled && !autopilotParentChannel && !fromMe && !isGroup && conversation?.id && !isApiManagedExisting && !takeoverBlocksAutomations) {
+                try {
+                  const { data: convAssign } = await supabase
+                    .from('whatsapp_conversations')
+                    .select('assigned_agent_id, ai_auto_reply_enabled, human_takeover')
+                    .eq('id', conversation.id)
+                    .maybeSingle();
+
+                  // Só preenche conversa SEM agente: se existe agente atribuído e a
+                  // IA está desligada, foi escolha do operador (botão Parar) e
+                  // reativar aqui desfaria o comando dele.
+                  if (convAssign && !convAssign.human_takeover && !convAssign.assigned_agent_id) {
+                    const { data: chatbotRunningAssign } = await supabase
+                      .from('chatbot_executions')
+                      .select('id')
+                      .eq('conversation_id', conversation.id)
+                      .eq('status', 'running')
+                      .limit(1);
+                    const chatbotRunning = !!(chatbotRunningAssign && chatbotRunningAssign.length > 0);
+
+                    if (!chatbotRunning) {
+                      const { data: boundAgentRow } = await supabase
+                        .from('ai_agents')
+                        .select('id, name')
+                        .eq('company_id', companyId)
+                        .eq('whatsapp_enabled', true)
+                        .eq('whatsapp_session_id', targetSessionId)
+                        .eq('is_active', true)
+                        .limit(1)
+                        .maybeSingle();
+
+                      if (boundAgentRow) {
+                        await supabase
+                          .from('whatsapp_conversations')
+                          .update({ assigned_agent_id: boundAgentRow.id, ai_auto_reply_enabled: true })
+                          .eq('id', conversation.id);
+                        console.log(`🤖🔗 [AUTO-ASSIGN] Agent "${boundAgentRow.name}" bound to session ${targetSessionId}, assigning to existing conversation ${conversation.id}`);
+                      }
+                    }
+                  }
+                } catch (assignErr) {
+                  console.error('🤖🔗 [AUTO-ASSIGN] Error (existing conversation):', assignErr);
                 }
               }
 

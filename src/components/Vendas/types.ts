@@ -126,6 +126,16 @@ export interface PipelineStage {
   /** Largura no desenho do funil (0–100). */
   weight: number;
   description?: string;
+  /**
+   * Etapa compartilhada: quando preenchido, esta etapa NÃO tem leads próprios —
+   * ela mostra os mesmos leads da etapa de origem (outro funil). Mover um lead
+   * aqui move para a etapa de origem, então os dois funis andam juntos.
+   */
+  sourceFunnelId?: string | null;
+  /** Etapa de origem (id dentro do funil de origem). */
+  sourceStageId?: string | null;
+  /** Pipeline que guarda esses leads (o da etapa de origem). */
+  sourcePipelineId?: string | null;
 }
 
 export interface Pipeline {
@@ -143,6 +153,12 @@ export interface Pipeline {
    * as próprias etapas.
    */
   funnelId?: string | null;
+  /**
+   * true = pipeline criado automaticamente junto com o funil. Ele existe só por
+   * causa daquele funil, então é removido junto quando o funil é excluído (os
+   * pipelines criados à mão continuam, apenas perdem o vínculo).
+   */
+  autoCreated?: boolean;
 }
 
 /** Lead/negociação de um pipeline não-CRM (criado manualmente ou via webhook local). */
@@ -215,6 +231,12 @@ export interface SalesWorkspace {
   activePipelineId: string;
   deals: Record<string, FunnelDeal>;
   localDeals: LocalDeal[];
+  /**
+   * true depois que os funis que nasceram copiando as etapas um do outro
+   * viraram vínculo explícito (ver normalizeWorkspace). Sem a marca, o
+   * vínculo voltaria a ser criado toda vez que a tela abrisse.
+   */
+  sharedIdsResolved?: boolean;
 }
 
 /** v3: vários funis + pipelines com vínculo opcional (novo formato). */
@@ -348,6 +370,7 @@ const defaultSources = (): FunnelSource[] => [
 /**
  * Etapas iniciais de um funil: cópia das colunas do kanban do CRM.
  * Os ids são os mesmos das colunas, então os leads do CRM já nascem mapeados.
+ * Usado pelo PRIMEIRO funil (o que espelha o CRM) e pelas migrações.
  */
 export function stagesFromCrmColumns(): PipelineStage[] {
   const columns = loadCrmColumns();
@@ -359,9 +382,19 @@ export function stagesFromCrmColumns(): PipelineStage[] {
   }));
 }
 
+/**
+ * Etapas de um funil NOVO: mesmos nomes das colunas do CRM, mas com ids
+ * próprios. Sem isso, todo funil novo nascia mostrando os leads de outro funil
+ * por acidente (os ids eram os mesmos) — para trazer esses leads de propósito
+ * existe a etapa compartilhada.
+ */
+export function draftStagesFromCrmColumns(): PipelineStage[] {
+  return stagesFromCrmColumns().map((s) => ({ ...s, id: uid() }));
+}
+
 export function newFunnel(name: string, stages?: PipelineStage[]): SalesFunnel {
   const now = new Date().toISOString();
-  const ownStages = stages && stages.length ? stages : stagesFromCrmColumns();
+  const ownStages = stages && stages.length ? stages : draftStagesFromCrmColumns();
   return {
     id: uid(),
     name,
@@ -391,6 +424,26 @@ export function newCrmPipeline(funnel: SalesFunnel): Pipeline {
     stages: [],
     webhookStageId: funnel.stages[0]?.id || null,
     funnelId: funnel.id,
+    autoCreated: true,
+  };
+}
+
+/**
+ * Pipeline que nasce junto com um funil novo, já vinculado a ele.
+ *
+ * O funil é quem manda nas etapas; o pipeline só dá um quadro de leads para
+ * aquele funil. Os cards vêm das conversas do CRM, então os leads de WhatsApp
+ * aparecem no funil sem nenhuma configuração extra.
+ */
+export function newFunnelPipeline(funnel: SalesFunnel): Pipeline {
+  return {
+    id: uid(),
+    name: funnel.name,
+    crmSync: true,
+    stages: [],
+    webhookStageId: funnel.stages[0]?.id || null,
+    funnelId: funnel.id,
+    autoCreated: true,
   };
 }
 
@@ -564,6 +617,65 @@ export function normalizeWorkspace(raw: unknown): SalesWorkspace | null {
     }));
   const list = pipelines.length ? pipelines : [newCrmPipeline(funnels[0])];
 
+  // Todo funil tem o próprio pipeline. Funis criados antes desta regra ganham o
+  // deles aqui, uma única vez, e o vínculo já fica salvo no banco.
+  funnels.forEach((f) => {
+    if (!list.some((p) => p.funnelId === f.id)) list.push(newFunnelPipeline(f));
+  });
+
+  const byId = new Map(funnels.map((f) => [f.id, f] as const));
+
+  // Funis que nasceram copiando as etapas um do outro têm os MESMOS ids de etapa
+  // — e por isso mostravam os mesmos leads sem ninguém ter pedido. Na primeira
+  // leitura isso vira vínculo explícito: a tela diz de qual funil os leads vêm e
+  // dá para desvincular.
+  if (!ws.sharedIdsResolved) {
+    const ownerOf = new Map<string, string>();
+    funnels.forEach((f) => {
+      f.stages = f.stages.map((s) => {
+        const ownerId = ownerOf.get(s.id);
+        if (ownerId && ownerId !== f.id) {
+          const owner = byId.get(ownerId);
+          const sameStage = owner?.stages.find((o) => o.id === s.id);
+          if (owner && sameStage) {
+            const ownerPipeline = list.find((p) => p.funnelId === owner.id);
+            return {
+              ...s,
+              sourceFunnelId: owner.id,
+              sourceStageId: sameStage.id,
+              sourcePipelineId: ownerPipeline?.id ?? null,
+            };
+          }
+        }
+        ownerOf.set(s.id, f.id);
+        return s;
+      });
+    });
+  }
+  funnels.forEach((f) => {
+    f.stages = f.stages.map((s) => {
+      if (!s.sourceStageId) return s;
+      const source = s.sourceFunnelId ? byId.get(s.sourceFunnelId) : undefined;
+      const shared = source?.stages.find((o) => o.id === s.sourceStageId);
+      if (!source || !shared || source.id === f.id) {
+        return {
+          id: s.id,
+          title: s.title,
+          color: s.color,
+          weight: s.weight,
+          description: s.description,
+        };
+      }
+      const owner = list.find((p) => p.funnelId === source.id);
+      return {
+        ...s,
+        sourceFunnelId: source.id,
+        sourceStageId: shared.id,
+        sourcePipelineId: owner?.id ?? null,
+      };
+    });
+  });
+
   const activeFunnelId = funnels.some((f) => f.id === ws.activeFunnelId)
     ? (ws.activeFunnelId as string)
     : funnels[0].id;
@@ -572,6 +684,7 @@ export function normalizeWorkspace(raw: unknown): SalesWorkspace | null {
     version: 3,
     funnels,
     activeFunnelId,
+    sharedIdsResolved: true,
     pipelines: list,
     activePipelineId: list.some((p) => p.id === ws.activePipelineId)
       ? (ws.activePipelineId as string)

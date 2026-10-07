@@ -142,8 +142,9 @@ export function FunnelSwitcher({
             />
             {nameDialog === 'create' && (
               <p className="text-xs text-muted-foreground">
-                O funil nasce com as etapas do kanban do CRM — depois você edita as etapas dele
-                sem mexer no CRM.
+                O funil nasce com o próprio pipeline e etapas próprias (os nomes começam como os do
+                CRM, mas os leads vêm por vínculo). Na página do funil você edita as etapas e
+                compartilha uma etapa de outro funil para puxar os leads dela.
               </p>
             )}
           </div>

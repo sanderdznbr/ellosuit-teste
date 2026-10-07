@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2, Zap } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, Link2, Plus, Trash2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { STAGE_PALETTE, defaultWeight, uid, type PipelineColumn } from './types';
@@ -35,6 +35,8 @@ export interface FunnelBuilderProps {
   maxStages?: number;
   /** Quantidade de automações por id de etapa (exibida como selo no card). */
   automationCounts?: Record<string, number>;
+  /** Etapa compartilhada → texto da origem (ex.: "Comercial › Orçamento"). */
+  links?: Record<string, string>;
   /** Abre o chat de automação da etapa. Sem isto, o botão não aparece. */
   onAutomate?: (stageId: string) => void;
 }
@@ -47,6 +49,8 @@ interface RowProps {
   canRemove: boolean;
   canInsert: boolean;
   automations: number;
+  /** Origem da etapa compartilhada, quando houver. */
+  link?: string;
   onRename: (id: string, title: string) => void;
   onColor: (id: string, color: string) => void;
   onRemove: (id: string) => void;
@@ -62,6 +66,7 @@ function SortableStageRow({
   canRemove,
   canInsert,
   automations,
+  link,
   onRename,
   onColor,
   onRemove,
@@ -90,8 +95,14 @@ function SortableStageRow({
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 20 : undefined,
       }}
-      className="flex justify-center"
+      className="flex flex-col justify-center"
     >
+      {link && (
+        <div className="mb-1 flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+          <Link2 className="h-3 w-3" />
+          puxa leads de {link}
+        </div>
+      )}
       <div
         className="flex w-full items-center gap-1.5 rounded-2xl border bg-card px-2 py-1.5 shadow-sm transition-[box-shadow,border-color] focus-within:border-primary/60"
         style={{ width: `${width}%`, minWidth: '236px' }}
@@ -195,6 +206,7 @@ export function FunnelBuilder({
   minStages = MIN_STAGES,
   maxStages = MAX_STAGES,
   automationCounts = {},
+  links = {},
   onAutomate,
 }: FunnelBuilderProps) {
   const sensors = useSensors(
@@ -265,6 +277,7 @@ export function FunnelBuilder({
                   canRemove={canRemove}
                   canInsert={canInsert}
                   automations={automationCounts[stage.id] ?? 0}
+                  link={links[stage.id]}
                   onRename={rename}
                   onColor={setColor}
                   onRemove={remove}
